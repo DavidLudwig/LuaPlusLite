@@ -67,6 +67,15 @@ namespace LuaPlusLite {
 		LuaObject() : lua_state_(NULL), ref_(LUA_NOREF) {
 		}
 		
+		LuaObject(const LuaObject & src) : lua_state_(src.lua_state_), ref_(LUA_NOREF)
+		{
+			if (lua_state_->GetCState() && src.ref_ != LUA_NOREF) {
+				lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, src.ref_);
+				ref_ = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
+				assert(ref_ != src.ref_);
+			}
+		}
+		
 		void Reset() {
 			if (ref_ != LUA_NOREF && lua_state_ != NULL) {
 				luaL_unref(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
@@ -182,6 +191,16 @@ int main(int argc, const char * argv[])
 	lua_Integer decoded_number = myEncodedInteger.ToInteger();
 	cout << "... decoded number is " << decoded_number << endl;
 	assert(random_number == decoded_number);
+	
+	cout << "Copying LuaObject containing the previously-generated, random integer: " << random_number << endl;
+	LuaObject copyOfEncodedInteger(myEncodedInteger);
+	cout << "... encoded type number is " << copyOfEncodedInteger.Type() << endl;
+	assert(copyOfEncodedInteger.Type() == LUA_TNUMBER);
+	cout << "... encoded type name " << copyOfEncodedInteger.TypeName() << endl;
+	assert(strcmp(copyOfEncodedInteger.TypeName(), "number") == 0);
+	lua_Integer copy_of_decoded_number = copyOfEncodedInteger.ToInteger();
+	cout << "... decoded number is " << copy_of_decoded_number << endl;
+	assert(random_number == copy_of_decoded_number);
 	
 	cout << "Assigning and retrieving a random string: ";
 	char random_string[16];
