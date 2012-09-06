@@ -121,6 +121,22 @@ namespace LuaPlusLite {
 			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 		}
 		
+		void SetInteger(const char * key, lua_Integer value) {
+			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
+			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			lua_pushinteger(lua_state_->GetCState(), value);
+			lua_setfield(lua_state_->GetCState(), -2, key);
+		}
+		
+		LuaObject GetByName(const char * key) {
+			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
+			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			lua_getfield(lua_state_->GetCState(), -1, key);
+			LuaObject value(lua_state_, -1);
+			lua_pop(lua_state_->GetCState(), 2);
+			return value;
+		}
+
 		int Type() {
 			// TODO: check validity of object state, and type of value
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
@@ -268,6 +284,24 @@ int main(int argc, const char * argv[])
 	cout << "... encoded type name " << myTable.TypeName() << endl;
 	assert(strcmp(myTable.TypeName(), "table") == 0);
 	assert(lua_gettop(myLuaState_CState) == 0);
+	
+	cout << "Creating a table entry using the random string, \""
+		<< random_string << "\", as a key and the random number, "
+		<< random_number << ", as a value.\n";
+	myTable.SetInteger(random_string, random_number);
+	cout << "... retrieving the value back to a LuaObject\n";
+	LuaObject tableEncodedInteger = myTable.GetByName(random_string);
+//	cout << &tableEncodedInteger << endl;
+//	cout << "... c state: " << tableEncodedInteger.GetCState() << endl;
+	int table_encoded_integer_type = tableEncodedInteger.Type();
+	cout << "... type number: " << table_encoded_integer_type << endl;
+	assert(table_encoded_integer_type == LUA_TNUMBER);
+	const char * table_encoded_integer_type_name = tableEncodedInteger.TypeName();
+	cout << "... type name: " << table_encoded_integer_type_name << endl;
+	assert(strcmp(table_encoded_integer_type_name, "number") == 0);
+	int decoded_table_integer_value = tableEncodedInteger.ToInteger();
+	cout << "... decoded integer value: " << decoded_table_integer_value << endl;
+	assert(decoded_table_integer_value == random_number);
 	
     return 0;
 }
