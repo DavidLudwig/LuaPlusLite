@@ -90,6 +90,20 @@ namespace LuaPlusLite {
 			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 		}
 		
+		int Type() {
+			// TODO: check validity of object state, and type of value
+			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			int type = lua_type(lua_state_->GetCState(), -1);
+			lua_pop(lua_state_->GetCState(), 1);
+			return type;
+		}
+		
+		const char * TypeName() {
+			// TODO: check validity of object state, and type of value
+			int type = Type();
+			return lua_typename(lua_state_->GetCState(), type);
+		}
+		
 		lua_Integer ToInteger(int * isnum = NULL) {
 			// TODO: check validity of object state, and type of value
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
@@ -149,6 +163,10 @@ int main(int argc, const char * argv[])
 	cout << random_number << endl;
 	LuaObject myEncodedInteger;
 	myEncodedInteger.AssignInteger(&myLuaState, random_number);
+	cout << "... encoded type number is " << myEncodedInteger.Type() << endl;
+	assert(myEncodedInteger.Type() == LUA_TNUMBER);
+	cout << "... encoded type name " << myEncodedInteger.TypeName() << endl;
+	assert(strcmp(myEncodedInteger.TypeName(), "number") == 0);
 	lua_Integer decoded_number = myEncodedInteger.ToInteger();
 	cout << "... decoded number is " << decoded_number << endl;
 	assert(random_number == decoded_number);
@@ -165,6 +183,10 @@ int main(int argc, const char * argv[])
 	cout << random_string << endl;
 	LuaObject myEncodedString;
 	myEncodedString.AssignString(&myLuaState, random_string);
+	cout << "... encoded type number is " << myEncodedString.Type() << endl;
+	assert(myEncodedString.Type() == LUA_TSTRING);
+	cout << "... encoded type name " << myEncodedString.TypeName() << endl;
+	assert(strcmp(myEncodedString.TypeName(), "string") == 0);
 	const char * decoded_string = myEncodedString.ToString();
 	cout << "... decoded string is " << decoded_string << endl;
 	assert(decoded_string != NULL);
