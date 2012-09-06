@@ -90,6 +90,12 @@ namespace LuaPlusLite {
 			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 		}
 		
+		void AssignNil(LuaState * state) {
+			AssignToState(state);
+			lua_pushnil(state->GetCState());
+			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+		}
+		
 		int Type() {
 			// TODO: check validity of object state, and type of value
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
@@ -191,6 +197,14 @@ int main(int argc, const char * argv[])
 	cout << "... decoded string is " << decoded_string << endl;
 	assert(decoded_string != NULL);
 	assert(strcmp(random_string, decoded_string) == 0);
+	
+	cout << "Assigning and retrieving a nil value\n";
+	LuaObject myNilObject;
+	myNilObject.AssignNil(&myLuaState);
+	cout << "... encoded type number is " << myNilObject.Type() << endl;
+	assert(myNilObject.Type() == LUA_TNIL);
+	cout << "... encoded type name " << myNilObject.TypeName() << endl;
+	assert(strcmp(myNilObject.TypeName(), "nil") == 0);
 	
     return 0;
 }
