@@ -96,6 +96,12 @@ namespace LuaPlusLite {
 			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 		}
 		
+		void AssignNewTable(LuaState * state, int narr = 0, int nrec = 0) {
+			AssignToState(state);
+			lua_createtable(state->GetCState(), narr, nrec);
+			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+		}
+		
 		int Type() {
 			// TODO: check validity of object state, and type of value
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
@@ -205,6 +211,14 @@ int main(int argc, const char * argv[])
 	assert(myNilObject.Type() == LUA_TNIL);
 	cout << "... encoded type name " << myNilObject.TypeName() << endl;
 	assert(strcmp(myNilObject.TypeName(), "nil") == 0);
+	
+	cout << "Assigning a new table\n";
+	LuaObject myTable;
+	myTable.AssignNewTable(&myLuaState);
+	cout << "... encoded type number is " << myTable.Type() << endl;
+	assert(myTable.Type() == LUA_TTABLE);
+	cout << "... encoded type name " << myTable.TypeName() << endl;
+	assert(strcmp(myTable.TypeName(), "table") == 0);
 	
     return 0;
 }
