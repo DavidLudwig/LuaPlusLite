@@ -74,6 +74,9 @@ namespace LuaPlusLite {
 				lua_state_ = NULL;
 			}
 		}
+
+		// TODO: make sure that assigning a value to itself doesn't make the
+		// old value get garbage collected
 	
 		void AssignInteger(LuaState * state, lua_Integer value) {
 			AssignToState(state);
