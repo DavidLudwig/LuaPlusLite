@@ -86,6 +86,12 @@ namespace LuaPlusLite {
 			}
 		}
 		
+		~LuaObject() {
+			if (lua_state_ && lua_state_->GetCState() && ref_ != LUA_NOREF) {
+				luaL_unref(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			}
+		}
+		
 		void Reset() {
 			if (ref_ != LUA_NOREF && lua_state_ != NULL) {
 				luaL_unref(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
