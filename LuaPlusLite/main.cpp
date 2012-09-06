@@ -20,16 +20,37 @@ extern "C" {
 }
 
 namespace LuaPlusLite {
+	static const char * LUAPLUSLITE_LUASTATE_REGISTRYSTRING = "LuaPlusLite_LuaState";
+
 	class LuaState {
 	public:
 		LuaState() : c_state_(NULL) {
 			c_state_ = luaL_newstate();
+			lua_pushstring(c_state_, LUAPLUSLITE_LUASTATE_REGISTRYSTRING);
+			lua_pushlightuserdata(c_state_, this);
+			lua_settable(c_state_, LUA_REGISTRYINDEX);
 		}
 		
 		~LuaState() {
 			if (c_state_) {
 				lua_close(c_state_);
 				c_state_ = NULL;
+			}
+		}
+		
+		static LuaState * CastState(lua_State * wrapped_c_state) {
+			if (wrapped_c_state == NULL) {
+				return NULL;
+			}
+			lua_pushstring(wrapped_c_state, LUAPLUSLITE_LUASTATE_REGISTRYSTRING);
+			lua_gettable(wrapped_c_state, LUA_REGISTRYINDEX);
+			if ( ! lua_islightuserdata(wrapped_c_state, -1)) {
+				lua_pop(wrapped_c_state, 1);
+				return NULL;
+			} else {
+				LuaState * cpp_state = static_cast<LuaState*>(lua_touserdata(wrapped_c_state, -1));
+				lua_pop(wrapped_c_state, 1);
+				return cpp_state;
 			}
 		}
 		
@@ -110,8 +131,15 @@ int main(int argc, const char * argv[])
 	LuaState myLuaState;
 	
 	lua_State * myLuaState_CState = myLuaState.GetCState();
-	cout << "... Done!  Inner lua_State is " << myLuaState_CState << endl;
+	cout << "... Done!\n";
+	cout << "... Inner lua_State is " << myLuaState_CState << endl;
+	cout << "... Wrapper (a LuaState) is at " << &myLuaState << endl;
 	assert(myLuaState_CState != NULL);
+	
+	cout << "Retrieving the C++ LuaState via the wrapped, C-based, lua_State\n";
+	LuaState * luaStateFromInnerState = LuaState::CastState(myLuaState_CState);
+	cout << "... LuaState from inner, C-based, lua_State: " << luaStateFromInnerState << endl;
+	assert(luaStateFromInnerState == &myLuaState);
 	
 	cout << "Assigning and retrieving a random integer: ";
 	lua_Integer random_number = rand();
