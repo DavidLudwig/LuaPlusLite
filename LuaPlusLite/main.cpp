@@ -64,7 +64,8 @@ namespace LuaPlusLite {
 
 	class LuaObject {
 	public:
-		LuaObject() : lua_state_(NULL), ref_(LUA_NOREF) {
+		LuaObject() : lua_state_(NULL), ref_(LUA_NOREF)
+		{
 		}
 		
 		LuaObject(const LuaObject & src) : lua_state_(src.lua_state_), ref_(LUA_NOREF)
