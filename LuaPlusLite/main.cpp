@@ -93,32 +93,29 @@ namespace LuaPlusLite {
 				lua_state_ = NULL;
 			}
 		}
-
-		// TODO: make sure that assigning a value to itself doesn't make the
-		// old value get garbage collected
 	
 		void AssignInteger(LuaState * state, lua_Integer value) {
-			AssignToState(state);
 			lua_pushinteger(state->GetCState(), value);
-			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+			AssignToStateAndRef(state, new_ref);
 		}
 		
 		void AssignString(LuaState * state, const char * value) {
-			AssignToState(state);
 			lua_pushstring(state->GetCState(), value);
-			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+			AssignToStateAndRef(state, new_ref);
 		}
 		
 		void AssignNil(LuaState * state) {
-			AssignToState(state);
 			lua_pushnil(state->GetCState());
-			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+			AssignToStateAndRef(state, new_ref);
 		}
 		
 		void AssignNewTable(LuaState * state, int narr = 0, int nrec = 0) {
-			AssignToState(state);
 			lua_createtable(state->GetCState(), narr, nrec);
-			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+			AssignToStateAndRef(state, new_ref);
 		}
 		
 		void SetInteger(const char * key, lua_Integer value) {
@@ -168,12 +165,13 @@ namespace LuaPlusLite {
 		}
 		
 	private:
-		void AssignToState(LuaState * state) {
+		void AssignToStateAndRef(LuaState * state, int ref) {
 			// TODO: check validity of state and consider throwing a LuaException if it is invalid
 			// TODO: consider returning early here if 'lua_state_ == state'
 			Reset();
 			// TODO: see if lua_state_ is/should-be reference counted
 			lua_state_ = state;
+			ref_ = ref;
 		}
 	
 		LuaState * lua_state_;
