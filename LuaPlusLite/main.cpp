@@ -76,21 +76,13 @@ namespace LuaPlusLite {
 		}
 	
 		void AssignInteger(LuaState * state, lua_Integer value) {
-			// TODO: check validity of state and throw a LuaException if it is invalid
-			Reset();
-			
-			// TODO: see if lua_state_ is/should-be reference counted
-			lua_state_ = state;
+			AssignToState(state);
 			lua_pushinteger(state->GetCState(), value);
 			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 		}
 		
 		void AssignString(LuaState * state, const char * value) {
-			// TODO: check validity of state and throw a LuaException if it is invalid
-			Reset();
-			
-			// TODO: see if lua_state_ is/should-be reference counted
-			lua_state_ = state;
+			AssignToState(state);
 			lua_pushstring(state->GetCState(), value);
 			ref_ = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 		}
@@ -112,6 +104,14 @@ namespace LuaPlusLite {
 		}
 		
 	private:
+		void AssignToState(LuaState * state) {
+			// TODO: check validity of state and consider throwing a LuaException if it is invalid
+			// TODO: consider returning early here if 'lua_state_ == state'
+			Reset();
+			// TODO: see if lua_state_ is/should-be reference counted
+			lua_state_ = state;
+		}
+	
 		LuaState * lua_state_;
 		int ref_;
 	};
