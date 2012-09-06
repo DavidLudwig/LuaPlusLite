@@ -68,6 +68,15 @@ namespace LuaPlusLite {
 		{
 		}
 		
+		LuaObject(LuaState * state, int stack_position) : lua_state_(state), ref_(LUA_NOREF)
+		{
+			if (lua_state_->GetCState()) {
+				// TODO: check for valid stack position (and throw LuaException on failure)
+				lua_pushvalue(lua_state_->GetCState(), stack_position);
+				ref_ = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
+			}
+		}
+		
 		LuaObject(const LuaObject & src) : lua_state_(src.lua_state_), ref_(LUA_NOREF)
 		{
 			if (lua_state_->GetCState() && src.ref_ != LUA_NOREF) {
@@ -202,6 +211,18 @@ int main(int argc, const char * argv[])
 	lua_Integer copy_of_decoded_number = copyOfEncodedInteger.ToInteger();
 	cout << "... decoded number is " << copy_of_decoded_number << endl;
 	assert(random_number == copy_of_decoded_number);
+	
+	cout << "Assigning and retrieving the previously-generated random integer via use of the Lua stack.\n";
+	lua_pushinteger(myLuaState.GetCState(), random_number);
+	LuaObject stackMadeEncodedInteger(&myLuaState, -1);
+	lua_pop(myLuaState.GetCState(), 1);
+	cout << "... encoded type number is " << stackMadeEncodedInteger.Type() << endl;
+	assert(stackMadeEncodedInteger.Type() == LUA_TNUMBER);
+	cout << "... encoded type name " << stackMadeEncodedInteger.TypeName() << endl;
+	assert(strcmp(stackMadeEncodedInteger.TypeName(), "number") == 0);
+	lua_Integer stack_made_decoded_number = stackMadeEncodedInteger.ToInteger();
+	cout << "... decoded number is " << stack_made_decoded_number << endl;
+	assert(random_number == stack_made_decoded_number);
 	
 	cout << "Assigning and retrieving a random string: ";
 	char random_string[16];
