@@ -183,11 +183,13 @@ int main(int argc, const char * argv[])
 	cout << "... Inner lua_State is " << myLuaState_CState << endl;
 	cout << "... Wrapper (a LuaState) is at " << &myLuaState << endl;
 	assert(myLuaState_CState != NULL);
+	int top = lua_gettop(myLuaState_CState);
 	
 	cout << "Retrieving the C++ LuaState via the wrapped, C-based, lua_State\n";
 	LuaState * luaStateFromInnerState = LuaState::CastState(myLuaState_CState);
 	cout << "... LuaState from inner, C-based, lua_State: " << luaStateFromInnerState << endl;
 	assert(luaStateFromInnerState == &myLuaState);
+	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning and retrieving a random integer: ";
 	lua_Integer random_number = rand();
@@ -201,6 +203,7 @@ int main(int argc, const char * argv[])
 	lua_Integer decoded_number = myEncodedInteger.ToInteger();
 	cout << "... decoded number is " << decoded_number << endl;
 	assert(random_number == decoded_number);
+	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Copying LuaObject containing the previously-generated, random integer: " << random_number << endl;
 	LuaObject copyOfEncodedInteger(myEncodedInteger);
@@ -211,6 +214,7 @@ int main(int argc, const char * argv[])
 	lua_Integer copy_of_decoded_number = copyOfEncodedInteger.ToInteger();
 	cout << "... decoded number is " << copy_of_decoded_number << endl;
 	assert(random_number == copy_of_decoded_number);
+	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning and retrieving the previously-generated random integer via use of the Lua stack.\n";
 	lua_pushinteger(myLuaState.GetCState(), random_number);
@@ -223,6 +227,7 @@ int main(int argc, const char * argv[])
 	lua_Integer stack_made_decoded_number = stackMadeEncodedInteger.ToInteger();
 	cout << "... decoded number is " << stack_made_decoded_number << endl;
 	assert(random_number == stack_made_decoded_number);
+	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning and retrieving a random string: ";
 	char random_string[16];
@@ -244,6 +249,7 @@ int main(int argc, const char * argv[])
 	cout << "... decoded string is " << decoded_string << endl;
 	assert(decoded_string != NULL);
 	assert(strcmp(random_string, decoded_string) == 0);
+	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning and retrieving a nil value\n";
 	LuaObject myNilObject;
@@ -252,6 +258,7 @@ int main(int argc, const char * argv[])
 	assert(myNilObject.Type() == LUA_TNIL);
 	cout << "... encoded type name " << myNilObject.TypeName() << endl;
 	assert(strcmp(myNilObject.TypeName(), "nil") == 0);
+	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning a new table\n";
 	LuaObject myTable;
@@ -260,6 +267,7 @@ int main(int argc, const char * argv[])
 	assert(myTable.Type() == LUA_TTABLE);
 	cout << "... encoded type name " << myTable.TypeName() << endl;
 	assert(strcmp(myTable.TypeName(), "table") == 0);
+	assert(lua_gettop(myLuaState_CState) == 0);
 	
     return 0;
 }
