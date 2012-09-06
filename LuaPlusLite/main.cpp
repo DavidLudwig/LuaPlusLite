@@ -199,7 +199,6 @@ int main(int argc, const char * argv[])
 	cout << "... Inner lua_State is " << myLuaState_CState << endl;
 	cout << "... Wrapper (a LuaState) is at " << &myLuaState << endl;
 	assert(myLuaState_CState != NULL);
-	int top = lua_gettop(myLuaState_CState);
 	
 	cout << "Retrieving the C++ LuaState via the wrapped, C-based, lua_State\n";
 	LuaState * luaStateFromInnerState = LuaState::CastState(myLuaState_CState);
