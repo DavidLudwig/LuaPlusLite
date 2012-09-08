@@ -64,6 +64,10 @@ namespace LuaPlusLite {
 			return lua_gettop(c_state_);
 		}
 		
+		void Pop(int n) {
+			lua_pop(c_state_, n);
+		}
+		
 		LuaObject Stack(int index);
 
 	private:
@@ -334,6 +338,7 @@ int main(int argc, const char * argv[])
 		int decoded_integer_from_Stack_method = myLuaState.Stack(1).ToInteger();
 		cout << "... decoded integer from Stack(1): " << decoded_integer_from_Stack_method << endl;
 		assert(decoded_integer_from_Stack_method == random_number_2);
+		myLuaState.Pop(1);
 	}
 	
     return 0;
