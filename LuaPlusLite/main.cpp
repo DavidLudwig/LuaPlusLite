@@ -154,6 +154,10 @@ namespace LuaPlusLite {
 			lua_pop(lua_state_->GetCState(), 2);
 			return value;
 		}
+		
+		LuaObject operator[](const char * key) {
+			return GetByName(key);
+		}
 
 		int Type() {
 			// TODO: check validity of object state, and type of value
@@ -322,24 +326,28 @@ int main(int argc, const char * argv[])
 	assert(strcmp(myTable.TypeName(), "table") == 0);
 	assert(lua_gettop(myLuaState_CState) == 0);
 	
-	cout << "Creating a table entry using the random string, \""
-		<< random_string << "\", as a key and the random number, "
-		<< random_number << ", as a value.\n";
-	myTable.SetInteger(random_string, random_number);
-	cout << "... retrieving the value back to a LuaObject\n";
-	LuaObject tableEncodedInteger = myTable.GetByName(random_string);
-//	cout << &tableEncodedInteger << endl;
-//	cout << "... c state: " << tableEncodedInteger.GetCState() << endl;
-	int table_encoded_integer_type = tableEncodedInteger.Type();
-	cout << "... type number: " << table_encoded_integer_type << endl;
-	assert(table_encoded_integer_type == LUA_TNUMBER);
-	const char * table_encoded_integer_type_name = tableEncodedInteger.TypeName();
-	cout << "... type name: " << table_encoded_integer_type_name << endl;
-	assert(strcmp(table_encoded_integer_type_name, "number") == 0);
-	int decoded_table_integer_value = tableEncodedInteger.ToInteger();
-	cout << "... decoded integer value: " << decoded_table_integer_value << endl;
-	assert(decoded_table_integer_value == random_number);
-	assert(lua_gettop(myLuaState_CState) == 0);
+	{
+		int value = rand();
+		string key = get_random_string();
+		cout << "Creating and retriving a table entry using the random string, \""
+			<< key << "\", as a key and the random number, "
+			<< value << ", as a value.\n";
+		myTable.SetInteger(key.c_str(), value);
+		LuaObject encoded_value_1 = myTable.GetByName(key.c_str());
+		cout << "... encoded value type via GetByName: " << encoded_value_1.Type() << endl;
+		assert(encoded_value_1.Type() == LUA_TNUMBER);
+		cout << "... encoded value type name via GetByName: " << encoded_value_1.TypeName() << endl;
+		assert(strcmp(encoded_value_1.TypeName(), "number") == 0);
+		cout << "... decoded value via GetByName: " << encoded_value_1.ToInteger() << endl;
+		assert(encoded_value_1.ToInteger() == value);
+		LuaObject encoded_value_2 = myTable[key.c_str()];
+		cout << "... encoded value type via operator[]: " << encoded_value_2.Type() << endl;
+		assert(encoded_value_2.Type() == LUA_TNUMBER);
+		cout << "... encoded value type name via operator[]: " << encoded_value_2.TypeName() << endl;
+		assert(strcmp(encoded_value_2.TypeName(), "number") == 0);
+		cout << "... decoded value via operator[]: " << encoded_value_2.ToInteger() << endl;
+		assert(encoded_value_2.ToInteger() == value);
+	}
 
 	{
 		int random_number_2 = rand();
