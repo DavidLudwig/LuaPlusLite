@@ -21,6 +21,8 @@ extern "C" {
 
 namespace LuaPlusLite {
 	static const char * LUAPLUSLITE_LUASTATE_REGISTRYSTRING = "LuaPlusLite_LuaState";
+	
+	class LuaObject;
 
 	class LuaState {
 	public:
@@ -57,6 +59,12 @@ namespace LuaPlusLite {
 		lua_State * GetCState() const {
 			return c_state_;
 		}
+		
+		int GetTop() const {
+			return lua_gettop(c_state_);
+		}
+		
+		LuaObject Stack(int index);
 
 	private:
 		lua_State * c_state_;
@@ -184,6 +192,11 @@ namespace LuaPlusLite {
 		LuaState * lua_state_;
 		int ref_;
 	};
+	
+	LuaObject LuaState::Stack(int index) {
+		// TODO: check for a valid stack index
+		return LuaObject(this, index);
+	}
 
 	class LuaStackObject {
 	public:
@@ -307,6 +320,25 @@ int main(int argc, const char * argv[])
 	cout << "... decoded integer value: " << decoded_table_integer_value << endl;
 	assert(decoded_table_integer_value == random_number);
 	assert(lua_gettop(myLuaState_CState) == 0);
+
+	{
+		int random_number_2 = rand();
+		cout << "Retrieving a new random number from the stack, " << random_number_2 << ", as accessed by LuaState::Stack().\n";
+		int original_stack_top = myLuaState.GetTop();
+		cout << "... original stack top: " << original_stack_top << endl;
+		lua_pushinteger(myLuaState_CState, random_number_2);
+		int new_stack_top = myLuaState.GetTop();
+		cout << "... new stack top: " << new_stack_top << endl;
+		assert(new_stack_top = original_stack_top + 1);
+		int type_from_Stack_position_1 = myLuaState.Stack(1).Type();
+		cout << "... type from Stack(1): " << type_from_Stack_position_1 << endl;
+		const char * type_name_from_stack_position_1 = myLuaState.Stack(1).TypeName();
+		cout << "... type name from Stack(1): " << type_name_from_stack_position_1 << endl;
+		assert(strcmp(type_name_from_stack_position_1, "number") == 0);
+		int decoded_integer_from_Stack_method = myLuaState.Stack(1).ToInteger();
+		cout << "... decoded integer from Stack(1): " << decoded_integer_from_Stack_method << endl;
+		assert(decoded_integer_from_Stack_method == random_number_2);
+	}
 	
     return 0;
 }
