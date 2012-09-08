@@ -197,10 +197,6 @@ namespace LuaPlusLite {
 		// TODO: check for a valid stack index
 		return LuaObject(this, index);
 	}
-
-	class LuaStackObject {
-	public:
-	};
 }
 using namespace LuaPlusLite;
 
