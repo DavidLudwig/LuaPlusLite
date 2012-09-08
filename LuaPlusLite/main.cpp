@@ -129,6 +129,7 @@ namespace LuaPlusLite {
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
 			lua_pushinteger(lua_state_->GetCState(), value);
 			lua_setfield(lua_state_->GetCState(), -2, key);
+			lua_pop(lua_state_->GetCState(), 1);
 		}
 		
 		LuaObject GetByName(const char * key) {
@@ -305,6 +306,7 @@ int main(int argc, const char * argv[])
 	int decoded_table_integer_value = tableEncodedInteger.ToInteger();
 	cout << "... decoded integer value: " << decoded_table_integer_value << endl;
 	assert(decoded_table_integer_value == random_number);
+	assert(lua_gettop(myLuaState_CState) == 0);
 	
     return 0;
 }
