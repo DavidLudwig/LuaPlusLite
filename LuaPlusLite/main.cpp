@@ -69,6 +69,8 @@ namespace LuaPlusLite {
 		}
 		
 		LuaObject Stack(int index);
+		
+		LuaObject GetGlobals();
 
 	private:
 		lua_State * c_state_;
@@ -201,8 +203,26 @@ namespace LuaPlusLite {
 		// TODO: check for a valid stack index
 		return LuaObject(this, index);
 	}
+	
+	LuaObject LuaState::GetGlobals() {
+		lua_rawgeti(c_state_, LUA_REGISTRYINDEX, LUA_RIDX_GLOBALS);
+		LuaObject globals(this, -1);
+		lua_pop(c_state_, 1);
+		return globals;
+	}
 }
 using namespace LuaPlusLite;
+
+static string get_random_string(int num_chars = 15) {
+	string random_string;
+	random_string.resize(num_chars);
+	for (int i = 0; i < num_chars; i++) {
+		int ch = rand() % 26;
+		ch += 'A';
+		random_string[i] = ch;
+	}
+	return random_string;
+}
 
 int main(int argc, const char * argv[])
 {
@@ -339,6 +359,31 @@ int main(int argc, const char * argv[])
 		cout << "... decoded integer from Stack(1): " << decoded_integer_from_Stack_method << endl;
 		assert(decoded_integer_from_Stack_method == random_number_2);
 		myLuaState.Pop(1);
+	}
+	
+	{
+		cout << "Retrieving global table\n";
+		LuaObject allGlobals = myLuaState.GetGlobals();
+		cout << "... type: " << allGlobals.Type() << endl;
+		assert(allGlobals.Type() == LUA_TTABLE);
+		cout << "... type name: " << allGlobals.TypeName() << endl;
+		assert(strcmp(allGlobals.TypeName(), "table") == 0);
+	}
+	
+	{
+		int value = rand();
+		string key = get_random_string();
+		cout << "Assigning, retrieving, and clearing a global value.\n";
+		cout << "... key (a random string): " << key << endl;
+		cout << "... value (a random integer): " << value << endl;
+		myLuaState.GetGlobals().SetInteger(key.c_str(), value);
+		int decoded_value_1 = myLuaState.GetGlobals().GetByName(key.c_str()).ToInteger();
+		cout << "... decoded value 1 (single-line retrieval): " << decoded_value_1 << endl;
+		assert(decoded_value_1 == value);
+		LuaObject encoded_value = myLuaState.GetGlobals().GetByName(key.c_str());
+		int decoded_value_2 = encoded_value.ToInteger();
+		cout << "... decoded value 2 (value from named LuaObject): " << decoded_value_2 << endl;
+		assert(decoded_value_2 == value);
 	}
 	
     return 0;
