@@ -19,6 +19,8 @@ extern "C" {
 #include "lauxlib.h"
 }
 
+#define LuaPlusLite__ToXYZ_methods_convert_internal_value_types 0
+
 namespace LuaPlusLite {
 	static const char * LUAPLUSLITE_LUASTATE_REGISTRYSTRING = "LuaPlusLite_LuaState";
 	
@@ -177,6 +179,13 @@ namespace LuaPlusLite {
 			// TODO: check validity of object state, and type of value
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
 			lua_Integer value = lua_tointegerx(lua_state_->GetCState(), -1, isnum);
+#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
+			if (Type() != lua_state_->Stack(-1).Type()) {
+				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
+				AssignToStateAndRef(lua_state_, new_ref);
+				return value;
+			}
+#endif
 			lua_pop(lua_state_->GetCState(), 1);
 			return value;
 		}
@@ -185,6 +194,13 @@ namespace LuaPlusLite {
 			// TODO: check validity of object state, and type of value
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
 			const char * value = lua_tolstring(lua_state_->GetCState(), -1, len);
+#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
+			if (Type() != lua_state_->Stack(-1).Type()) {
+				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
+				AssignToStateAndRef(lua_state_, new_ref);
+				return value;
+			}
+#endif
 			lua_pop(lua_state_->GetCState(), 1);
 			return value;
 		}
@@ -392,6 +408,25 @@ int main(int argc, const char * argv[])
 		int decoded_value_2 = encoded_value.ToInteger();
 		cout << "... decoded value 2 (value from named LuaObject): " << decoded_value_2 << endl;
 		assert(decoded_value_2 == value);
+	}
+	
+	{
+		cout << "Type Conversion Test:\n";
+		LuaObject myTable;
+		myTable.AssignNewTable(&myLuaState);
+		myTable.SetInteger("hello", 123);
+		LuaObject helloObj = myTable["hello"];
+		cout << "... initial type: " << helloObj.Type() << endl;
+		cout << "... initial type name: " << helloObj.TypeName() << endl;
+		const char * value_as_string = helloObj.ToString();
+		cout << "... value as string: " << value_as_string << endl;
+		cout << "... new type: " << helloObj.Type() << endl;
+		cout << "... new type name: " << helloObj.TypeName() << endl;
+#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
+		assert(helloObj.Type() == LUA_TSTRING);
+#else
+		assert(helloObj.Type() == LUA_TNUMBER);
+#endif
 	}
 	
     return 0;
