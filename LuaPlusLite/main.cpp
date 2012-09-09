@@ -256,6 +256,9 @@ namespace LuaPlusLite {
 		}
 		
 		bool IsNone() const {
+			// API DIFFERENCE: LuaPlus will return 'false' if IsNone() is called
+			// on an uninitialized LuaObject.  LuaPlusLite will return 'true'
+			// instead.
 			if ( ! lua_state_) {
 				return true;
 			}
