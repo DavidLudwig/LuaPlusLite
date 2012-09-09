@@ -20,6 +20,7 @@ extern "C" {
 }
 
 #define LuaPlusLite__ToXYZ_methods_convert_internal_value_types 0
+#define LuaPlusLite__IsString_and_IsNumber_only_match_explicitly 0
 
 namespace LuaPlusLite {
 	static const char * LUAPLUSLITE_LUASTATE_REGISTRYSTRING = "LuaPlusLite_LuaState";
@@ -179,6 +180,74 @@ namespace LuaPlusLite {
 			return lua_typename(lua_state_->GetCState(), type);
 		}
 		
+		bool IsInteger() const {
+			return IsNumber();
+		}
+		
+		bool IsString() const {
+#if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
+			return Type() == LUA_TSTRING;
+#else
+			Push();
+			const bool is_match = lua_isstring(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+#endif
+		}
+		
+		bool IsNumber() const {
+#if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
+			return Type() == LUA_TNUMBER;
+#else
+			Push();
+			const bool is_match = lua_isnumber(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+#endif
+		}
+		
+		bool IsTable() const {
+			Push();
+			const bool is_match = lua_istable(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+		}
+		
+		bool IsNil() const {
+			Push();
+			const bool is_match = lua_isnil(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+		}
+		
+		bool IsUserData() const {
+			Push();
+			const bool is_match = lua_isuserdata(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+		}
+		
+		bool IsFunction() const {
+			Push();
+			const bool is_match = lua_isfunction(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+		}
+		
+		bool IsLightUserData() const {
+			Push();
+			const bool is_match = lua_islightuserdata(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+		}
+		
+		bool IsThread() const {
+			Push();
+			const bool is_match = lua_isthread(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+		}
+		
 		lua_Integer ToInteger(int * isnum = NULL) {
 			// TODO: check validity of object state, and type of value
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
@@ -237,6 +306,12 @@ namespace LuaPlusLite {
 }
 using namespace LuaPlusLite;
 
+
+// #includes for testing purposes only!
+extern "C" {
+#include "lobject.h"
+}
+
 static string get_random_string(int num_chars = 15) {
 	string random_string;
 	random_string.resize(num_chars);
@@ -246,6 +321,49 @@ static string get_random_string(int num_chars = 15) {
 		random_string[i] = ch;
 	}
 	return random_string;
+}
+
+static bool is_string_convertible_to_number(const char * str) {
+	if (str == NULL) {
+		return false;
+	}
+	size_t len = strlen(str);
+	lua_Number result = 0;
+	return (luaO_str2d(str, len, &result) != 0);
+}
+
+void log_and_check_types_via_Is_methods(LuaObject & obj, int actual) {
+	cout << "... checking type via Is methods:\n";
+	cout << "....... IsFunction?: " << obj.IsFunction() << endl;
+	assert(obj.IsFunction() == (actual == LUA_TFUNCTION));
+	cout << "....... IsInteger?: " << obj.IsInteger() << endl;
+#if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
+	assert(obj.IsInteger() == (actual == LUA_TNUMBER));
+#else
+	assert(obj.IsInteger() == (actual == LUA_TNUMBER || (actual == LUA_TSTRING && is_string_convertible_to_number(obj.ToString()))));
+#endif
+	cout << "....... IsLightUserData?: " << obj.IsLightUserData() << endl;
+	assert(obj.IsLightUserData() == (actual == LUA_TLIGHTUSERDATA));
+	cout << "....... IsNil?: " << obj.IsNil() << endl;
+	assert(obj.IsNil() == (actual == LUA_TNIL));
+	cout << "....... IsNumber?: " << obj.IsNumber() << endl;
+#if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
+	assert(obj.IsNumber() == (actual == LUA_TNUMBER));
+#else
+	assert(obj.IsNumber() == (actual == LUA_TNUMBER || (actual == LUA_TSTRING && is_string_convertible_to_number(obj.ToString()))));
+#endif
+	cout << "....... IsString?: " << obj.IsString() << endl;
+#if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
+	assert(obj.IsString() == (actual == LUA_TSTRING));
+#else
+	assert(obj.IsString() == (actual == LUA_TSTRING || actual == LUA_TNUMBER));
+#endif
+	cout << "....... IsTable?: " << obj.IsTable() << endl;
+	assert(obj.IsTable() == (actual == LUA_TTABLE));
+	cout << "....... IsThread?: " << obj.IsThread() << endl;
+	assert(obj.IsThread() == (actual == LUA_TTHREAD));
+	cout << "....... IsUserData?: " << obj.IsUserData() << endl;
+	assert(obj.IsUserData() == (actual == LUA_TUSERDATA || actual == LUA_TLIGHTUSERDATA));
 }
 
 int main(int argc, const char * argv[])
@@ -280,6 +398,7 @@ int main(int argc, const char * argv[])
 	lua_Integer decoded_number = myEncodedInteger.ToInteger();
 	cout << "... decoded number is " << decoded_number << endl;
 	assert(random_number == decoded_number);
+	log_and_check_types_via_Is_methods(myEncodedInteger, LUA_TNUMBER);
 	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Copying LuaObject containing the previously-generated, random integer: " << random_number << endl;
@@ -291,6 +410,7 @@ int main(int argc, const char * argv[])
 	lua_Integer copy_of_decoded_number = copyOfEncodedInteger.ToInteger();
 	cout << "... decoded number is " << copy_of_decoded_number << endl;
 	assert(random_number == copy_of_decoded_number);
+	log_and_check_types_via_Is_methods(copyOfEncodedInteger, LUA_TNUMBER);
 	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning and retrieving the previously-generated random integer via use of the Lua stack.\n";
@@ -304,6 +424,7 @@ int main(int argc, const char * argv[])
 	lua_Integer stack_made_decoded_number = stackMadeEncodedInteger.ToInteger();
 	cout << "... decoded number is " << stack_made_decoded_number << endl;
 	assert(random_number == stack_made_decoded_number);
+	log_and_check_types_via_Is_methods(stackMadeEncodedInteger, LUA_TNUMBER);
 	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning and retrieving a random string: ";
@@ -326,6 +447,7 @@ int main(int argc, const char * argv[])
 	cout << "... decoded string is " << decoded_string << endl;
 	assert(decoded_string != NULL);
 	assert(strcmp(random_string, decoded_string) == 0);
+	log_and_check_types_via_Is_methods(myEncodedString, LUA_TSTRING);
 	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning and retrieving a nil value\n";
@@ -335,6 +457,7 @@ int main(int argc, const char * argv[])
 	assert(myNilObject.Type() == LUA_TNIL);
 	cout << "... encoded type name " << myNilObject.TypeName() << endl;
 	assert(strcmp(myNilObject.TypeName(), "nil") == 0);
+	log_and_check_types_via_Is_methods(myNilObject, LUA_TNIL);
 	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning a new table\n";
@@ -344,6 +467,7 @@ int main(int argc, const char * argv[])
 	assert(myTable.Type() == LUA_TTABLE);
 	cout << "... encoded type name " << myTable.TypeName() << endl;
 	assert(strcmp(myTable.TypeName(), "table") == 0);
+	log_and_check_types_via_Is_methods(myTable, LUA_TTABLE);
 	assert(lua_gettop(myLuaState_CState) == 0);
 	
 	{
@@ -360,6 +484,7 @@ int main(int argc, const char * argv[])
 		assert(strcmp(encoded_value_1.TypeName(), "number") == 0);
 		cout << "... decoded value via GetByName: " << encoded_value_1.ToInteger() << endl;
 		assert(encoded_value_1.ToInteger() == value);
+		log_and_check_types_via_Is_methods(encoded_value_1, LUA_TNUMBER);
 		LuaObject encoded_value_2 = myTable[key.c_str()];
 		cout << "... encoded value type via operator[]: " << encoded_value_2.Type() << endl;
 		assert(encoded_value_2.Type() == LUA_TNUMBER);
@@ -367,6 +492,7 @@ int main(int argc, const char * argv[])
 		assert(strcmp(encoded_value_2.TypeName(), "number") == 0);
 		cout << "... decoded value via operator[]: " << encoded_value_2.ToInteger() << endl;
 		assert(encoded_value_2.ToInteger() == value);
+		log_and_check_types_via_Is_methods(encoded_value_2, LUA_TNUMBER);
 	}
 
 	{
@@ -386,6 +512,7 @@ int main(int argc, const char * argv[])
 		int decoded_integer_from_Stack_method = myLuaState.Stack(1).ToInteger();
 		cout << "... decoded integer from Stack(1): " << decoded_integer_from_Stack_method << endl;
 		assert(decoded_integer_from_Stack_method == random_number_2);
+//		log_and_check_types_via_Is_methods<LuaObject>(myLuaState.Stack(1), LUA_TNUMBER);
 		myLuaState.Pop(1);
 	}
 	
@@ -396,6 +523,7 @@ int main(int argc, const char * argv[])
 		assert(allGlobals.Type() == LUA_TTABLE);
 		cout << "... type name: " << allGlobals.TypeName() << endl;
 		assert(strcmp(allGlobals.TypeName(), "table") == 0);
+		log_and_check_types_via_Is_methods(allGlobals, LUA_TTABLE);
 	}
 	
 	{
@@ -428,8 +556,10 @@ int main(int argc, const char * argv[])
 		cout << "... new type name: " << helloObj.TypeName() << endl;
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
 		assert(helloObj.Type() == LUA_TSTRING);
+		log_and_check_types_via_Is_methods(helloObj, LUA_TSTRING);
 #else
 		assert(helloObj.Type() == LUA_TNUMBER);
+		log_and_check_types_via_Is_methods(helloObj, LUA_TNUMBER);
 #endif
 	}
 	
