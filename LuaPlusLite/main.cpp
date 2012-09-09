@@ -97,7 +97,7 @@ namespace LuaPlusLite {
 		LuaObject(const LuaObject & src) : lua_state_(src.lua_state_), ref_(LUA_NOREF)
 		{
 			if (lua_state_->GetCState() && src.ref_ != LUA_NOREF) {
-				lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, src.ref_);
+				src.Push();
 				ref_ = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
 				assert(ref_ != src.ref_);
 			}
