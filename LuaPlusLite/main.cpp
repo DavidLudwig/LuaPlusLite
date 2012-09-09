@@ -153,7 +153,7 @@ namespace LuaPlusLite {
 		
 		void SetInteger(const char * key, lua_Integer value) {
 			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
-			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			Push();
 			lua_pushinteger(lua_state_->GetCState(), value);
 			lua_setfield(lua_state_->GetCState(), -2, key);
 			lua_pop(lua_state_->GetCState(), 1);
@@ -161,7 +161,7 @@ namespace LuaPlusLite {
 		
 		LuaObject GetByName(const char * key) {
 			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
-			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			Push();
 			lua_getfield(lua_state_->GetCState(), -1, key);
 			LuaObject value(lua_state_, -1);
 			lua_pop(lua_state_->GetCState(), 2);
@@ -174,7 +174,7 @@ namespace LuaPlusLite {
 
 		int Type() const {
 			// TODO: check validity of object state, and type of value
-			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			Push();
 			int type = lua_type(lua_state_->GetCState(), -1);
 			lua_pop(lua_state_->GetCState(), 1);
 			return type;
@@ -256,7 +256,7 @@ namespace LuaPlusLite {
 		
 		lua_Integer ToInteger(int * isnum = NULL) {
 			// TODO: check validity of object state, and type of value
-			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			Push();
 			lua_Integer value = lua_tointegerx(lua_state_->GetCState(), -1, isnum);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
 			if (Type() != lua_state_->Stack(-1).Type()) {
@@ -271,7 +271,7 @@ namespace LuaPlusLite {
 		
 		lua_Number ToNumber(int * isnum = NULL) {
 			// TODO: check validity of object state, and type of value
-			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			Push();
 			lua_Number value = lua_tonumberx(lua_state_->GetCState(), -1, isnum);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
 			if (Type() != lua_state_->Stack(-1).Type()) {
@@ -286,7 +286,7 @@ namespace LuaPlusLite {
 		
 		const char * ToString(size_t * len = NULL) {
 			// TODO: check validity of object state, and type of value
-			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			Push();
 			const char * value = lua_tolstring(lua_state_->GetCState(), -1, len);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
 			if (Type() != lua_state_->Stack(-1).Type()) {
