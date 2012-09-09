@@ -186,6 +186,13 @@ namespace LuaPlusLite {
 			return lua_typename(lua_state_->GetCState(), type);
 		}
 		
+		bool IsBoolean() const {
+			Push();
+			const bool is_match = lua_isboolean(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+		}
+		
 		bool IsInteger() const {
 			return IsNumber();
 		}
@@ -236,6 +243,13 @@ namespace LuaPlusLite {
 		bool IsFunction() const {
 			Push();
 			const bool is_match = lua_isfunction(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+		}
+		
+		bool IsCFunction() const {
+			Push();
+			const bool is_match = lua_iscfunction(lua_state_->GetCState(), -1);
 			lua_state_->Pop(1);
 			return is_match;
 		}
@@ -355,6 +369,10 @@ static bool is_string_convertible_to_number(const char * str) {
 
 void log_and_check_types_via_Is_methods(LuaObject & obj, int actual) {
 	cout << "... checking type via Is methods:\n";
+	cout << "....... IsBoolean?: " << obj.IsBoolean() << endl;
+	assert(obj.IsBoolean() == (actual == LUA_TBOOLEAN));
+	cout << "....... IsCFunction?: " << obj.IsCFunction() << endl;
+	//assert(obj.IsCFunction() == (actual == LUA_TFUNCTION));	// Not applied as the value might be a non-C function.
 	cout << "....... IsFunction?: " << obj.IsFunction() << endl;
 	assert(obj.IsFunction() == (actual == LUA_TFUNCTION));
 	cout << "....... IsInteger?: " << obj.IsInteger() << endl;
