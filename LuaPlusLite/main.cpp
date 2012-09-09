@@ -159,7 +159,7 @@ namespace LuaPlusLite {
 			return GetByName(key);
 		}
 
-		int Type() {
+		int Type() const {
 			// TODO: check validity of object state, and type of value
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
 			int type = lua_type(lua_state_->GetCState(), -1);
