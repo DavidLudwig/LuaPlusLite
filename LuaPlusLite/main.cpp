@@ -115,6 +115,10 @@ namespace LuaPlusLite {
 				lua_state_ = NULL;
 			}
 		}
+		
+		void Push() const {
+			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+		}
 	
 		void AssignInteger(LuaState * state, lua_Integer value) {
 			lua_pushinteger(state->GetCState(), value);
