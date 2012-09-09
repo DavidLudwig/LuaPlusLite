@@ -173,6 +173,9 @@ namespace LuaPlusLite {
 		}
 
 		int Type() const {
+			if ( ! lua_state_) {
+				return LUA_TNONE;
+			}
 			// TODO: check validity of object state, and type of value
 			Push();
 			int type = lua_type(lua_state_->GetCState(), -1);
@@ -183,10 +186,17 @@ namespace LuaPlusLite {
 		const char * TypeName() {
 			// TODO: check validity of object state, and type of value
 			int type = Type();
-			return lua_typename(lua_state_->GetCState(), type);
+			if (lua_state_) {
+				return lua_typename(lua_state_->GetCState(), type);
+			} else {
+				return lua_typename(NULL, type);
+			}
 		}
 		
 		bool IsBoolean() const {
+			if ( ! lua_state_) {
+				return false;
+			}
 			Push();
 			const bool is_match = lua_isboolean(lua_state_->GetCState(), -1);
 			lua_state_->Pop(1);
@@ -198,6 +208,9 @@ namespace LuaPlusLite {
 		}
 		
 		bool IsString() const {
+			if ( ! lua_state_) {
+				return false;
+			}
 #if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
 			return Type() == LUA_TSTRING;
 #else
@@ -209,6 +222,9 @@ namespace LuaPlusLite {
 		}
 		
 		bool IsNumber() const {
+			if ( ! lua_state_) {
+				return false;
+			}
 #if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
 			return Type() == LUA_TNUMBER;
 #else
@@ -220,6 +236,9 @@ namespace LuaPlusLite {
 		}
 		
 		bool IsTable() const {
+			if ( ! lua_state_) {
+				return false;
+			}
 			Push();
 			const bool is_match = lua_istable(lua_state_->GetCState(), -1);
 			lua_state_->Pop(1);
@@ -227,13 +246,39 @@ namespace LuaPlusLite {
 		}
 		
 		bool IsNil() const {
+			if ( ! lua_state_) {
+				return false;
+			}
 			Push();
 			const bool is_match = lua_isnil(lua_state_->GetCState(), -1);
 			lua_state_->Pop(1);
 			return is_match;
 		}
 		
+		bool IsNone() const {
+			if ( ! lua_state_) {
+				return true;
+			}
+			Push();
+			const bool is_match = lua_isnone(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+		}
+		
+		bool IsNoneOrNil() const {
+			if ( ! lua_state_) {
+				return true;
+			}
+			Push();
+			const bool is_match = lua_isnoneornil(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+		}
+		
 		bool IsUserData() const {
+			if ( ! lua_state_) {
+				return false;
+			}
 			Push();
 			const bool is_match = lua_isuserdata(lua_state_->GetCState(), -1);
 			lua_state_->Pop(1);
@@ -241,6 +286,9 @@ namespace LuaPlusLite {
 		}
 		
 		bool IsFunction() const {
+			if ( ! lua_state_) {
+				return false;
+			}
 			Push();
 			const bool is_match = lua_isfunction(lua_state_->GetCState(), -1);
 			lua_state_->Pop(1);
@@ -248,6 +296,9 @@ namespace LuaPlusLite {
 		}
 		
 		bool IsCFunction() const {
+			if ( ! lua_state_) {
+				return false;
+			}
 			Push();
 			const bool is_match = lua_iscfunction(lua_state_->GetCState(), -1);
 			lua_state_->Pop(1);
@@ -255,6 +306,9 @@ namespace LuaPlusLite {
 		}
 		
 		bool IsLightUserData() const {
+			if ( ! lua_state_) {
+				return false;
+			}
 			Push();
 			const bool is_match = lua_islightuserdata(lua_state_->GetCState(), -1);
 			lua_state_->Pop(1);
@@ -262,6 +316,9 @@ namespace LuaPlusLite {
 		}
 		
 		bool IsThread() const {
+			if ( ! lua_state_) {
+				return false;
+			}
 			Push();
 			const bool is_match = lua_isthread(lua_state_->GetCState(), -1);
 			lua_state_->Pop(1);
@@ -385,6 +442,10 @@ void log_and_check_types_via_Is_methods(LuaObject & obj, int actual) {
 	assert(obj.IsLightUserData() == (actual == LUA_TLIGHTUSERDATA));
 	cout << "....... IsNil?: " << obj.IsNil() << endl;
 	assert(obj.IsNil() == (actual == LUA_TNIL));
+	cout << "....... IsNone?: " << obj.IsNone() << endl;
+	assert(obj.IsNone() == (actual == LUA_TNONE));
+	cout << "....... IsNoneOrNil?: " << obj.IsNoneOrNil() << endl;
+	assert(obj.IsNoneOrNil() == (actual == LUA_TNONE || actual == LUA_TNIL));
 	cout << "....... IsNumber?: " << obj.IsNumber() << endl;
 #if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
 	assert(obj.IsNumber() == (actual == LUA_TNUMBER));
@@ -515,6 +576,16 @@ int main(int argc, const char * argv[])
 	assert(strcmp(myNilObject.TypeName(), "nil") == 0);
 	log_and_check_types_via_Is_methods(myNilObject, LUA_TNIL);
 	assert(lua_gettop(myLuaState_CState) == 0);
+	
+	{
+		cout << "Inspecting an uninitialized LuaObject:\n";
+		LuaObject uninitializedObject;
+		cout << "... encoded type number is " << uninitializedObject.Type() << endl;
+		assert(uninitializedObject.Type() == LUA_TNONE);
+		cout << "... encoded type name: " << uninitializedObject.TypeName() << endl;
+		assert(strcmp(uninitializedObject.TypeName(), "no value") == 0);
+		log_and_check_types_via_Is_methods(uninitializedObject, LUA_TNONE);
+	}
 	
 	cout << "Assigning a new table\n";
 	LuaObject myTable;
