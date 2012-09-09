@@ -127,6 +127,12 @@ namespace LuaPlusLite {
 			AssignToStateAndRef(state, new_ref);
 		}
 		
+		void AssignNumber(LuaState * state, lua_Number value) {
+			lua_pushnumber(state->GetCState(), value);
+			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+			AssignToStateAndRef(state, new_ref);
+		}
+		
 		void AssignString(LuaState * state, const char * value) {
 			lua_pushstring(state->GetCState(), value);
 			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
@@ -252,6 +258,21 @@ namespace LuaPlusLite {
 			// TODO: check validity of object state, and type of value
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
 			lua_Integer value = lua_tointegerx(lua_state_->GetCState(), -1, isnum);
+#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
+			if (Type() != lua_state_->Stack(-1).Type()) {
+				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
+				AssignToStateAndRef(lua_state_, new_ref);
+				return value;
+			}
+#endif
+			lua_pop(lua_state_->GetCState(), 1);
+			return value;
+		}
+		
+		lua_Number ToNumber(int * isnum = NULL) {
+			// TODO: check validity of object state, and type of value
+			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			lua_Number value = lua_tonumberx(lua_state_->GetCState(), -1, isnum);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
 			if (Type() != lua_state_->Stack(-1).Type()) {
 				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
@@ -400,6 +421,23 @@ int main(int argc, const char * argv[])
 	assert(random_number == decoded_number);
 	log_and_check_types_via_Is_methods(myEncodedInteger, LUA_TNUMBER);
 	assert(lua_gettop(myLuaState_CState) == 0);
+	
+	{
+		cout << "Assigning and retrieving a random number: ";
+		lua_Number random_number = ((lua_Number)rand() / (lua_Number)rand());
+		cout << random_number << endl;
+		LuaObject myEncodedNumber;
+		myEncodedNumber.AssignNumber(&myLuaState, random_number);
+		cout << "... encoded type number is " << myEncodedNumber.Type() << endl;
+		assert(myEncodedNumber.Type() == LUA_TNUMBER);
+		cout << "... encoded type name " << myEncodedNumber.TypeName() << endl;
+		assert(strcmp(myEncodedNumber.TypeName(), "number") == 0);
+		lua_Number decoded_number = myEncodedNumber.ToNumber();
+		cout << "... decoded number is " << decoded_number << endl;
+		assert(random_number == decoded_number);
+		log_and_check_types_via_Is_methods(myEncodedNumber, LUA_TNUMBER);
+		assert(lua_gettop(myLuaState_CState) == 0);
+	}
 	
 	cout << "Copying LuaObject containing the previously-generated, random integer: " << random_number << endl;
 	LuaObject copyOfEncodedInteger(myEncodedInteger);
