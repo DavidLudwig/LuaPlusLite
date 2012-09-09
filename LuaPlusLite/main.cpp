@@ -120,6 +120,12 @@ namespace LuaPlusLite {
 		void Push() const {
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
 		}
+		
+		void AssignBoolean(LuaState * state, bool value) {
+			lua_pushboolean(state->GetCState(), value);
+			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+			AssignToStateAndRef(state, new_ref);
+		}
 	
 		void AssignInteger(LuaState * state, lua_Integer value) {
 			lua_pushinteger(state->GetCState(), value);
@@ -326,6 +332,20 @@ namespace LuaPlusLite {
 			const bool is_match = lua_isthread(lua_state_->GetCState(), -1);
 			lua_state_->Pop(1);
 			return is_match;
+		}
+		
+		bool ToBoolean() {
+			Push();
+			int value = lua_toboolean(lua_state_->GetCState(), -1);
+#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
+			if (Type() != lua_state_->Stack(-1).Type()) {
+				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
+				AssignToStateAndRef(lua_state_, new_ref);
+				return value;
+			}
+#endif
+			lua_pop(lua_state_->GetCState(), 1);
+			return value;
 		}
 		
 		lua_Integer ToInteger(int * isnum = NULL) {
@@ -588,6 +608,32 @@ int main(int argc, const char * argv[])
 		cout << "... encoded type name: " << uninitializedObject.TypeName() << endl;
 		assert(strcmp(uninitializedObject.TypeName(), "no value") == 0);
 		log_and_check_types_via_Is_methods(uninitializedObject, LUA_TNONE);
+	}
+	
+	{
+		cout << "Assigning and retrieving a boolean true value:\n";
+		LuaObject encoded_boolean;
+		encoded_boolean.AssignBoolean(&myLuaState, true);
+		cout << "... encoded type number is " << encoded_boolean.Type() << endl;
+		assert(encoded_boolean.Type() == LUA_TBOOLEAN);
+		cout << "... encoded type name: " << encoded_boolean.TypeName() << endl;
+		assert(strcmp(encoded_boolean.TypeName(), "boolean") == 0);
+		bool decoded_boolean = encoded_boolean.ToBoolean();
+		cout << "... decoded value: " << decoded_boolean << endl;
+		log_and_check_types_via_Is_methods(encoded_boolean, LUA_TBOOLEAN);
+	}
+
+	{
+		cout << "Assigning and retrieving a boolean false value:\n";
+		LuaObject encoded_boolean;
+		encoded_boolean.AssignBoolean(&myLuaState, false);
+		cout << "... encoded type number is " << encoded_boolean.Type() << endl;
+		assert(encoded_boolean.Type() == LUA_TBOOLEAN);
+		cout << "... encoded type name: " << encoded_boolean.TypeName() << endl;
+		assert(strcmp(encoded_boolean.TypeName(), "boolean") == 0);
+		bool decoded_boolean = encoded_boolean.ToBoolean();
+		cout << "... decoded value: " << decoded_boolean << endl;
+		log_and_check_types_via_Is_methods(encoded_boolean, LUA_TBOOLEAN);
 	}
 	
 	cout << "Assigning a new table\n";
