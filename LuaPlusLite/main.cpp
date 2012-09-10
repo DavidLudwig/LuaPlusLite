@@ -188,6 +188,7 @@ namespace LuaPlusLite {
 		}
 		
 		void SetInteger(const char * key, lua_Integer value) {
+			// TODO: allow Set* operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key != NULL);
 			Push();
