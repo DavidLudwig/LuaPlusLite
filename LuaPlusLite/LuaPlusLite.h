@@ -501,6 +501,9 @@ namespace LuaPlusLite {
 			return GetByIndex(key);
 		}
 		
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Private Stuff
+#endif
 	private:
 		void AssignToStateAndRef(LuaState * state, int ref) {
 			// TODO: check validity of state and consider throwing a LuaException if it is invalid
