@@ -20,6 +20,9 @@
 #define LuaPlusLite__IsString_and_IsNumber_only_match_explicitly 0
 
 namespace LuaPlusLite {
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Error Reporting
+#endif
 	class LuaException : public std::exception {
 	public:
 		LuaException() {
@@ -48,6 +51,11 @@ namespace LuaPlusLite {
 #else
 	#define luapluslite_assert(expression) if (!(expression)) { throw LuaException(std::string("assertion failed in ") + __FUNCTION__ + ": (" + #expression + ")"); }
 	#define luapluslite_assert_ex(expression, message) if (!(expression)) { throw LuaException(std::string("assertion failed in ") + __FUNCTION__ + ": (" + #expression + "); " + message); }
+#endif
+
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - LuaState
 #endif
 
 	static const char * LUAPLUSLITE_LUASTATE_REGISTRYSTRING = "LuaPlusLite_LuaState";
@@ -105,9 +113,19 @@ namespace LuaPlusLite {
 	private:
 		lua_State * c_state_;
 	};
+	
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - LuaObject
+#endif
 
 	class LuaObject {
 	public:
+	
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Initialization and Destruction
+#endif
+
 		LuaObject() : lua_state_(NULL), ref_(LUA_NOREF)
 		{
 		}
@@ -144,9 +162,18 @@ namespace LuaPlusLite {
 			}
 		}
 		
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Stack Management
+#endif
+		
 		void Push() const {
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
 		}
+
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Value Assignment
+#endif
 		
 		void AssignBoolean(LuaState * state, bool value) {
 			lua_pushboolean(state->GetCState(), value);
@@ -184,8 +211,13 @@ namespace LuaPlusLite {
 			AssignToStateAndRef(state, new_ref);
 		}
 		
+		
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Table Value Assignment
+#endif
+		
 		void SetInteger(const char * key, lua_Integer value) {
-			// TODO: allow Set* operation on userdata objects with appropriate metatables
+			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key != NULL);
 			Push();
@@ -195,7 +227,7 @@ namespace LuaPlusLite {
 		}
 		
 		void SetInteger(int key, lua_Integer value) {
-			// TODO: allow Set* operation on userdata objects with appropriate metatables
+			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			Push();
 			lua_pushinteger(lua_state_->GetCState(), key);
@@ -203,6 +235,10 @@ namespace LuaPlusLite {
 			lua_settable(lua_state_->GetCState(), -3);
 			lua_pop(lua_state_->GetCState(), 1);
 		}
+		
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Table Value Retrieval
+#endif
 		
 		LuaObject GetByName(const char * key) {
 			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
@@ -230,6 +266,10 @@ namespace LuaPlusLite {
 		LuaObject operator[](int key) {
 			return GetByIndex(key);
 		}
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Type Checking
+#endif
 
 		int Type() const {
 			if ( ! lua_state_) {
@@ -386,6 +426,11 @@ namespace LuaPlusLite {
 			lua_state_->Pop(1);
 			return is_match;
 		}
+
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Value Retrieval
+#endif
 		
 		bool ToBoolean() {
 			Push();
