@@ -196,6 +196,16 @@ namespace LuaPlusLite {
 			lua_pop(lua_state_->GetCState(), 1);
 		}
 		
+		void SetInteger(int key, lua_Integer value) {
+			// TODO: allow Set* operation on userdata objects with appropriate metatables
+			luapluslite_assert(IsTable() == true);
+			Push();
+			lua_pushinteger(lua_state_->GetCState(), key);
+			lua_pushinteger(lua_state_->GetCState(), value);
+			lua_settable(lua_state_->GetCState(), -3);
+			lua_pop(lua_state_->GetCState(), 1);
+		}
+		
 		LuaObject GetByName(const char * key) {
 			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
 			Push();
@@ -205,8 +215,22 @@ namespace LuaPlusLite {
 			return value;
 		}
 		
+		LuaObject GetByIndex(int key) {
+			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
+			Push();
+			lua_pushinteger(lua_state_->GetCState(), key);
+			lua_gettable(lua_state_->GetCState(), -2);
+			LuaObject value(lua_state_, -1);
+			lua_pop(lua_state_->GetCState(), 2);
+			return value;
+		}
+		
 		LuaObject operator[](const char * key) {
 			return GetByName(key);
+		}
+		
+		LuaObject operator[](int key) {
+			return GetByIndex(key);
 		}
 
 		int Type() const {
@@ -700,6 +724,35 @@ int main(int argc, const char * argv[])
 		cout << "... decoded value via operator[]: " << encoded_value_2.ToInteger() << endl;
 		assert(encoded_value_2.ToInteger() == value);
 		log_and_check_types_via_Is_methods(encoded_value_2, LUA_TNUMBER);
+	}
+	
+	{
+		int key = rand();
+		int value = rand();
+		cout << "Creating and retriving a table entry using the random number, "
+			<< key << ", as a key and the random number, "
+			<< value << ", as a value.\n";
+		LuaObject myTable;
+		myTable.AssignNewTable(&myLuaState);
+		myTable.SetInteger(key, value);
+
+		LuaObject encoded_value_1 = myTable.GetByIndex(key);
+		cout << "... encoded value type via GetByIndex: " << encoded_value_1.Type() << endl;
+		assert(encoded_value_1.Type() == LUA_TNUMBER);
+		cout << "... encoded value type name via GetByIndex: " << encoded_value_1.TypeName() << endl;
+		assert(strcmp(encoded_value_1.TypeName(), "number") == 0);
+		cout << "... decoded value via GetByIndex: " << encoded_value_1.ToInteger() << endl;
+		assert(encoded_value_1.ToInteger() == value);
+		log_and_check_types_via_Is_methods(encoded_value_1, LUA_TNUMBER);
+		LuaObject encoded_value_2 = myTable[key];
+		cout << "... encoded value type via operator[]: " << encoded_value_2.Type() << endl;
+		assert(encoded_value_2.Type() == LUA_TNUMBER);
+		cout << "... encoded value type name via operator[]: " << encoded_value_2.TypeName() << endl;
+		assert(strcmp(encoded_value_2.TypeName(), "number") == 0);
+		cout << "... decoded value via operator[]: " << encoded_value_2.ToInteger() << endl;
+		assert(encoded_value_2.ToInteger() == value);
+		log_and_check_types_via_Is_methods(encoded_value_2, LUA_TNUMBER);
+		assert(myLuaState.GetTop() == 0);
 	}
 
 	{
