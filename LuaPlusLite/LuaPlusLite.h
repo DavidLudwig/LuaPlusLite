@@ -167,6 +167,7 @@ namespace LuaPlusLite {
 #endif
 		
 		void Push() const {
+			luapluslite_assert(lua_state_ != NULL);
 			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
 		}
 
@@ -176,36 +177,42 @@ namespace LuaPlusLite {
 #endif
 		
 		void AssignBoolean(LuaState * state, bool value) {
+			luapluslite_assert(state != NULL);
 			lua_pushboolean(state->GetCState(), value);
 			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 			AssignToStateAndRef(state, new_ref);
 		}
 	
 		void AssignInteger(LuaState * state, lua_Integer value) {
+			luapluslite_assert(state != NULL);
 			lua_pushinteger(state->GetCState(), value);
 			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 			AssignToStateAndRef(state, new_ref);
 		}
 		
 		void AssignNumber(LuaState * state, lua_Number value) {
+			luapluslite_assert(state != NULL);
 			lua_pushnumber(state->GetCState(), value);
 			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 			AssignToStateAndRef(state, new_ref);
 		}
 		
 		void AssignString(LuaState * state, const char * value) {
+			luapluslite_assert(state != NULL);
 			lua_pushstring(state->GetCState(), value);
 			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 			AssignToStateAndRef(state, new_ref);
 		}
 		
 		void AssignNil(LuaState * state) {
+			luapluslite_assert(state != NULL);
 			lua_pushnil(state->GetCState());
 			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 			AssignToStateAndRef(state, new_ref);
 		}
 		
 		void AssignNewTable(LuaState * state, int narr = 0, int nrec = 0) {
+			luapluslite_assert(state != NULL);
 			lua_createtable(state->GetCState(), narr, nrec);
 			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 			AssignToStateAndRef(state, new_ref);
@@ -217,6 +224,9 @@ namespace LuaPlusLite {
 #endif
 		
 		bool ToBoolean() {
+			if ( ! lua_state_) {
+				return false;
+			}
 			Push();
 			int value = lua_toboolean(lua_state_->GetCState(), -1);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
@@ -231,7 +241,7 @@ namespace LuaPlusLite {
 		}
 		
 		lua_Integer ToInteger(int * isnum = NULL) {
-			// TODO: check validity of object state, and type of value
+			luapluslite_assert(IsInteger() == true);
 			Push();
 			lua_Integer value = lua_tointegerx(lua_state_->GetCState(), -1, isnum);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
@@ -246,7 +256,7 @@ namespace LuaPlusLite {
 		}
 		
 		lua_Number ToNumber(int * isnum = NULL) {
-			// TODO: check validity of object state, and type of value
+			luapluslite_assert(IsNumber() == true);
 			Push();
 			lua_Number value = lua_tonumberx(lua_state_->GetCState(), -1, isnum);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
@@ -261,7 +271,7 @@ namespace LuaPlusLite {
 		}
 		
 		const char * ToString(size_t * len = NULL) {
-			// TODO: check validity of object state, and type of value
+			luapluslite_assert(IsString() == true);
 			Push();
 			const char * value = lua_tolstring(lua_state_->GetCState(), -1, len);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
@@ -284,7 +294,6 @@ namespace LuaPlusLite {
 			if ( ! lua_state_) {
 				return LUA_TNONE;
 			}
-			// TODO: check validity of object state, and type of value
 			Push();
 			int type = lua_type(lua_state_->GetCState(), -1);
 			lua_pop(lua_state_->GetCState(), 1);
@@ -292,7 +301,6 @@ namespace LuaPlusLite {
 		}
 		
 		const char * TypeName() {
-			// TODO: check validity of object state, and type of value
 			int type = Type();
 			if (lua_state_) {
 				return lua_typename(lua_state_->GetCState(), type);
@@ -466,7 +474,8 @@ namespace LuaPlusLite {
 #endif
 		
 		LuaObject GetByName(const char * key) {
-			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
+			luapluslite_assert(IsTable() == true);
+			luapluslite_assert(key != NULL);
 			Push();
 			lua_getfield(lua_state_->GetCState(), -1, key);
 			LuaObject value(lua_state_, -1);
@@ -475,7 +484,7 @@ namespace LuaPlusLite {
 		}
 		
 		LuaObject GetByIndex(int key) {
-			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
+			luapluslite_assert(IsTable() == true);
 			Push();
 			lua_pushinteger(lua_state_->GetCState(), key);
 			lua_gettable(lua_state_->GetCState(), -2);
