@@ -505,6 +505,11 @@ namespace LuaPlusLite {
 		LuaState * lua_state_;
 		int ref_;
 	};
+
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - LuaState Miscellany
+#endif
 	
 	LuaObject LuaState::Stack(int index) {
 		// TODO: check for a valid stack index
