@@ -23,6 +23,36 @@ extern "C" {
 #define LuaPlusLite__IsString_and_IsNumber_only_match_explicitly 0
 
 namespace LuaPlusLite {
+	class LuaException : public std::exception {
+	public:
+		LuaException() {
+		}
+		
+		LuaException(const string & message) : message_(message) {
+		}
+		
+		virtual ~LuaException() {
+		}
+		
+		virtual const char * what() const throw() {
+			return message_.c_str();
+		}
+		
+	private:
+		std::string message_;
+	};
+
+#if defined(__clang__) || defined(__GNUC__)
+	#define luapluslite_assert(expression) if (!(expression)) { throw LuaException(string("assertion failed in ") + __PRETTY_FUNCTION__ + ": (" + #expression + ")"); }
+	#define luapluslite_assert_ex(expression, message) if (!(expression)) { throw LuaException(string("assertion failed in ") + __PRETTY_FUNCTION__ + ": (" + #expression + "); " + message); }
+#elif defined(_MSC_VER)
+	#define luapluslite_assert(expression) if (!(expression)) { throw LuaException(string("assertion failed in ") + __FUNCSIG__ + ": (" + #expression + ")"); }
+	#define luapluslite_assert_ex(expression, message) if (!(expression)) { throw LuaException(string("assertion failed in ") + __FUNCSIG__ + ": (" + #expression + "); " + message); }
+#else
+	#define luapluslite_assert(expression) if (!(expression)) { throw LuaException(string("assertion failed in ") + __FUNCTION__ + ": (" + #expression + ")"); }
+	#define luapluslite_assert_ex(expression, message) if (!(expression)) { throw LuaException(string("assertion failed in ") + __FUNCTION__ + ": (" + #expression + "); " + message); }
+#endif
+
 	static const char * LUAPLUSLITE_LUASTATE_REGISTRYSTRING = "LuaPlusLite_LuaState";
 	
 	class LuaObject;
@@ -158,7 +188,8 @@ namespace LuaPlusLite {
 		}
 		
 		void SetInteger(const char * key, lua_Integer value) {
-			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
+			luapluslite_assert(IsTable() == true);
+			luapluslite_assert(key != NULL);
 			Push();
 			lua_pushinteger(lua_state_->GetCState(), value);
 			lua_setfield(lua_state_->GetCState(), -2, key);
@@ -737,6 +768,36 @@ int main(int argc, const char * argv[])
 		assert(helloObj.Type() == LUA_TNUMBER);
 		log_and_check_types_via_Is_methods(helloObj, LUA_TNUMBER);
 #endif
+	}
+	
+	{
+		cout << "SetInteger exception test (on a non-table):\n";
+		LuaObject myNonTable;
+
+		bool wasExceptionCaught = false;
+		string exceptionMessage;
+		try {
+			myNonTable.SetInteger("foo", 456);
+		} catch (LuaException & e) {
+			wasExceptionCaught = true;
+			exceptionMessage = e.what();
+		}
+		cout << "... was exception caught on SetInteger called on uninitialized LuaObject?: " << wasExceptionCaught << endl;
+		assert(wasExceptionCaught == true);
+		cout << "... exception message: \"" << exceptionMessage << "\"\n";
+
+		wasExceptionCaught = false;
+		exceptionMessage = "";
+		myNonTable.AssignInteger(&myLuaState, 123);
+		try {
+			myNonTable.SetInteger("foo", 456);
+		} catch (LuaException & e) {
+			wasExceptionCaught = true;
+			exceptionMessage = e.what();
+		}
+		cout << "... was exception caught on SetInteger called on integer-representing LuaObject?: " << wasExceptionCaught << endl;
+		assert(wasExceptionCaught == true);
+		cout << "... exception message: \"" << exceptionMessage << "\"\n";
 	}
 	
     return 0;
