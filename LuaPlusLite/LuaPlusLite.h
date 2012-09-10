@@ -210,62 +210,71 @@ namespace LuaPlusLite {
 			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
 			AssignToStateAndRef(state, new_ref);
 		}
-		
-		
+
+
 #if defined(__clang__) || defined(__GNUC__)
-#pragma mark - Table Value Assignment
+#pragma mark - Value Retrieval
 #endif
 		
-		void SetInteger(const char * key, lua_Integer value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
-			luapluslite_assert(IsTable() == true);
-			luapluslite_assert(key != NULL);
+		bool ToBoolean() {
 			Push();
-			lua_pushinteger(lua_state_->GetCState(), value);
-			lua_setfield(lua_state_->GetCState(), -2, key);
-			lua_pop(lua_state_->GetCState(), 1);
-		}
-		
-		void SetInteger(int key, lua_Integer value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
-			luapluslite_assert(IsTable() == true);
-			Push();
-			lua_pushinteger(lua_state_->GetCState(), key);
-			lua_pushinteger(lua_state_->GetCState(), value);
-			lua_settable(lua_state_->GetCState(), -3);
-			lua_pop(lua_state_->GetCState(), 1);
-		}
-		
-#if defined(__clang__) || defined(__GNUC__)
-#pragma mark - Table Value Retrieval
+			int value = lua_toboolean(lua_state_->GetCState(), -1);
+#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
+			if (Type() != lua_state_->Stack(-1).Type()) {
+				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
+				AssignToStateAndRef(lua_state_, new_ref);
+				return value;
+			}
 #endif
-		
-		LuaObject GetByName(const char * key) {
-			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
-			Push();
-			lua_getfield(lua_state_->GetCState(), -1, key);
-			LuaObject value(lua_state_, -1);
-			lua_pop(lua_state_->GetCState(), 2);
+			lua_pop(lua_state_->GetCState(), 1);
 			return value;
 		}
 		
-		LuaObject GetByIndex(int key) {
-			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
+		lua_Integer ToInteger(int * isnum = NULL) {
+			// TODO: check validity of object state, and type of value
 			Push();
-			lua_pushinteger(lua_state_->GetCState(), key);
-			lua_gettable(lua_state_->GetCState(), -2);
-			LuaObject value(lua_state_, -1);
-			lua_pop(lua_state_->GetCState(), 2);
+			lua_Integer value = lua_tointegerx(lua_state_->GetCState(), -1, isnum);
+#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
+			if (Type() != lua_state_->Stack(-1).Type()) {
+				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
+				AssignToStateAndRef(lua_state_, new_ref);
+				return value;
+			}
+#endif
+			lua_pop(lua_state_->GetCState(), 1);
 			return value;
 		}
 		
-		LuaObject operator[](const char * key) {
-			return GetByName(key);
+		lua_Number ToNumber(int * isnum = NULL) {
+			// TODO: check validity of object state, and type of value
+			Push();
+			lua_Number value = lua_tonumberx(lua_state_->GetCState(), -1, isnum);
+#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
+			if (Type() != lua_state_->Stack(-1).Type()) {
+				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
+				AssignToStateAndRef(lua_state_, new_ref);
+				return value;
+			}
+#endif
+			lua_pop(lua_state_->GetCState(), 1);
+			return value;
 		}
 		
-		LuaObject operator[](int key) {
-			return GetByIndex(key);
+		const char * ToString(size_t * len = NULL) {
+			// TODO: check validity of object state, and type of value
+			Push();
+			const char * value = lua_tolstring(lua_state_->GetCState(), -1, len);
+#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
+			if (Type() != lua_state_->Stack(-1).Type()) {
+				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
+				AssignToStateAndRef(lua_state_, new_ref);
+				return value;
+			}
+#endif
+			lua_pop(lua_state_->GetCState(), 1);
+			return value;
 		}
+
 
 #if defined(__clang__) || defined(__GNUC__)
 #pragma mark - Type Checking
@@ -426,69 +435,61 @@ namespace LuaPlusLite {
 			lua_state_->Pop(1);
 			return is_match;
 		}
-
-
+		
+		
 #if defined(__clang__) || defined(__GNUC__)
-#pragma mark - Value Retrieval
+#pragma mark - Table Value Assignment
 #endif
 		
-		bool ToBoolean() {
+		void SetInteger(const char * key, lua_Integer value) {
+			// TODO: allow Set operation on userdata objects with appropriate metatables
+			luapluslite_assert(IsTable() == true);
+			luapluslite_assert(key != NULL);
 			Push();
-			int value = lua_toboolean(lua_state_->GetCState(), -1);
-#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
-			if (Type() != lua_state_->Stack(-1).Type()) {
-				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
-				AssignToStateAndRef(lua_state_, new_ref);
-				return value;
-			}
-#endif
+			lua_pushinteger(lua_state_->GetCState(), value);
+			lua_setfield(lua_state_->GetCState(), -2, key);
 			lua_pop(lua_state_->GetCState(), 1);
+		}
+		
+		void SetInteger(int key, lua_Integer value) {
+			// TODO: allow Set operation on userdata objects with appropriate metatables
+			luapluslite_assert(IsTable() == true);
+			Push();
+			lua_pushinteger(lua_state_->GetCState(), key);
+			lua_pushinteger(lua_state_->GetCState(), value);
+			lua_settable(lua_state_->GetCState(), -3);
+			lua_pop(lua_state_->GetCState(), 1);
+		}
+		
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Table Value Retrieval
+#endif
+		
+		LuaObject GetByName(const char * key) {
+			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
+			Push();
+			lua_getfield(lua_state_->GetCState(), -1, key);
+			LuaObject value(lua_state_, -1);
+			lua_pop(lua_state_->GetCState(), 2);
 			return value;
 		}
 		
-		lua_Integer ToInteger(int * isnum = NULL) {
-			// TODO: check validity of object state, and type of value
+		LuaObject GetByIndex(int key) {
+			// TODO: check validity of object state, and that it is a table, and that key is non-NULL
 			Push();
-			lua_Integer value = lua_tointegerx(lua_state_->GetCState(), -1, isnum);
-#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
-			if (Type() != lua_state_->Stack(-1).Type()) {
-				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
-				AssignToStateAndRef(lua_state_, new_ref);
-				return value;
-			}
-#endif
-			lua_pop(lua_state_->GetCState(), 1);
+			lua_pushinteger(lua_state_->GetCState(), key);
+			lua_gettable(lua_state_->GetCState(), -2);
+			LuaObject value(lua_state_, -1);
+			lua_pop(lua_state_->GetCState(), 2);
 			return value;
 		}
 		
-		lua_Number ToNumber(int * isnum = NULL) {
-			// TODO: check validity of object state, and type of value
-			Push();
-			lua_Number value = lua_tonumberx(lua_state_->GetCState(), -1, isnum);
-#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
-			if (Type() != lua_state_->Stack(-1).Type()) {
-				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
-				AssignToStateAndRef(lua_state_, new_ref);
-				return value;
-			}
-#endif
-			lua_pop(lua_state_->GetCState(), 1);
-			return value;
+		LuaObject operator[](const char * key) {
+			return GetByName(key);
 		}
 		
-		const char * ToString(size_t * len = NULL) {
-			// TODO: check validity of object state, and type of value
-			Push();
-			const char * value = lua_tolstring(lua_state_->GetCState(), -1, len);
-#if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
-			if (Type() != lua_state_->Stack(-1).Type()) {
-				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
-				AssignToStateAndRef(lua_state_, new_ref);
-				return value;
-			}
-#endif
-			lua_pop(lua_state_->GetCState(), 1);
-			return value;
+		LuaObject operator[](int key) {
+			return GetByIndex(key);
 		}
 		
 	private:
