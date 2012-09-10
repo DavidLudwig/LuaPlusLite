@@ -55,6 +55,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		7517E23D15FD70B300A5ECDA /* LuaPlusLite.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LuaPlusLite.h; sourceTree = "<group>"; };
 		7530D49615F843AC001F3F86 /* LuaPlusLite */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = LuaPlusLite; sourceTree = BUILT_PRODUCTS_DIR; };
 		7530D49A15F843AC001F3F86 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		7530D4A615F843E0001F3F86 /* contents.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = contents.html; sourceTree = "<group>"; };
@@ -160,6 +161,7 @@
 			isa = PBXGroup;
 			children = (
 				7530D49A15F843AC001F3F86 /* main.cpp */,
+				7517E23D15FD70B300A5ECDA /* LuaPlusLite.h */,
 			);
 			path = LuaPlusLite;
 			sourceTree = "<group>";
@@ -430,6 +432,7 @@
 				7530D4A215F843AC001F3F86 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
