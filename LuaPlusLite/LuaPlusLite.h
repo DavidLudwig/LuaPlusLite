@@ -9,14 +9,13 @@
 #ifndef LuaPlusLite_LuaPlusLite_h
 #define LuaPlusLite_LuaPlusLite_h
 
+// C++ Standard Library Includes:
 #include <string>
 
-extern "C" {
-#include "lua.h"
-#include "lualib.h"
-#include "lauxlib.h"
-}
+// Lua Includes:
+#include <lua.hpp>
 
+// LuaPlusLite Compile-Time Options:
 #define LuaPlusLite__ToXYZ_methods_convert_internal_value_types 0
 #define LuaPlusLite__IsString_and_IsNumber_only_match_explicitly 0
 
