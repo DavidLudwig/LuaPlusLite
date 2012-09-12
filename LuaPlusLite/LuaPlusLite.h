@@ -190,6 +190,13 @@ namespace LuaPlusLite {
 			AssignToStateAndRef(state, new_ref);
 		}
 		
+		void AssignLightUserData(LuaState * state, void * value) {
+			luapluslite_assert(state != NULL);
+			lua_pushlightuserdata(state->GetCState(), value);
+			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
+			AssignToStateAndRef(state, new_ref);
+		}
+		
 		void AssignNumber(LuaState * state, lua_Number value) {
 			luapluslite_assert(state != NULL);
 			lua_pushnumber(state->GetCState(), value);
@@ -469,6 +476,18 @@ namespace LuaPlusLite {
 			lua_pop(lua_state_->GetCState(), 1);
 		}
 		
+		void SetInteger(LuaObject key, lua_Integer value) {
+			// TODO: allow Set operation on userdata objects with appropriate metatables
+			luapluslite_assert(IsTable() == true);
+			luapluslite_assert(key.IsNone() == false);
+			// TODO: make Set operations with LuaObject-based keys check for compatible LuaStates
+			Push();
+			key.Push();
+			lua_pushinteger(lua_state_->GetCState(), value);
+			lua_settable(lua_state_->GetCState(), -3);
+			lua_pop(lua_state_->GetCState(), 1);
+		}
+		
 #if defined(__clang__) || defined(__GNUC__)
 #pragma mark - Table Value Retrieval
 #endif
@@ -493,12 +512,28 @@ namespace LuaPlusLite {
 			return value;
 		}
 		
+		LuaObject GetByObject(LuaObject key) {
+			luapluslite_assert(IsTable() == true);
+			luapluslite_assert(key.IsNone() == false);
+			// TODO: check that key is in the same state as 'this'
+			Push();
+			key.Push();
+			lua_gettable(lua_state_->GetCState(), -2);
+			LuaObject value(lua_state_, -1);
+			lua_pop(lua_state_->GetCState(), 2);
+			return value;
+		}
+		
 		LuaObject operator[](const char * key) {
 			return GetByName(key);
 		}
 		
 		LuaObject operator[](int key) {
 			return GetByIndex(key);
+		}
+		
+		LuaObject operator[](LuaObject key) {
+			return GetByObject(key);
 		}
 		
 #if defined(__clang__) || defined(__GNUC__)
