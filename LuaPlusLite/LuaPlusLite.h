@@ -456,8 +456,10 @@ namespace LuaPlusLite {
 #pragma mark - Table Value Assignment
 #endif
 
+		// TODO: allow Set operation on userdata objects with appropriate metatables
+		// TODO: make Set operations with LuaObject-based keys check for compatible LuaStates
+
 		void SetBoolean(const char * key, bool value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key != NULL);
 			Push();
@@ -467,7 +469,6 @@ namespace LuaPlusLite {
 		}
 		
 		void SetBoolean(int key, bool value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			Push();
 			lua_pushinteger(lua_state_->GetCState(), key);
@@ -477,10 +478,8 @@ namespace LuaPlusLite {
 		}
 		
 		void SetBoolean(LuaObject key, bool value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key.IsNone() == false);
-			// TODO: make Set operations with LuaObject-based keys check for compatible LuaStates
 			Push();
 			key.Push();
 			lua_pushboolean(lua_state_->GetCState(), value);
@@ -489,7 +488,6 @@ namespace LuaPlusLite {
 		}
 		
 		void SetInteger(const char * key, lua_Integer value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key != NULL);
 			Push();
@@ -499,7 +497,6 @@ namespace LuaPlusLite {
 		}
 		
 		void SetInteger(int key, lua_Integer value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			Push();
 			lua_pushinteger(lua_state_->GetCState(), key);
@@ -509,10 +506,8 @@ namespace LuaPlusLite {
 		}
 		
 		void SetInteger(LuaObject key, lua_Integer value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key.IsNone() == false);
-			// TODO: make Set operations with LuaObject-based keys check for compatible LuaStates
 			Push();
 			key.Push();
 			lua_pushinteger(lua_state_->GetCState(), value);
@@ -521,7 +516,6 @@ namespace LuaPlusLite {
 		}
 		
 		void SetLightUserData(const char * key, void * value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key != NULL);
 			Push();
@@ -531,7 +525,6 @@ namespace LuaPlusLite {
 		}
 		
 		void SetLightUserData(int key, void * value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			Push();
 			lua_pushinteger(lua_state_->GetCState(), key);
@@ -541,10 +534,8 @@ namespace LuaPlusLite {
 		}
 		
 		void SetLightUserData(LuaObject key, void * value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key.IsNone() == false);
-			// TODO: make Set operations with LuaObject-based keys check for compatible LuaStates
 			Push();
 			key.Push();
 			lua_pushlightuserdata(lua_state_->GetCState(), value);
@@ -553,7 +544,6 @@ namespace LuaPlusLite {
 		}
 		
 		void SetNil(const char * key) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key != NULL);
 			Push();
@@ -563,7 +553,6 @@ namespace LuaPlusLite {
 		}
 		
 		void SetNil(int key) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			Push();
 			lua_pushinteger(lua_state_->GetCState(), key);
@@ -573,10 +562,8 @@ namespace LuaPlusLite {
 		}
 		
 		void SetNil(LuaObject key) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key.IsNone() == false);
-			// TODO: make Set operations with LuaObject-based keys check for compatible LuaStates
 			Push();
 			key.Push();
 			lua_pushnil(lua_state_->GetCState());
@@ -585,7 +572,6 @@ namespace LuaPlusLite {
 		}
 		
 		void SetNumber(const char * key, lua_Number value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key != NULL);
 			Push();
@@ -595,7 +581,6 @@ namespace LuaPlusLite {
 		}
 		
 		void SetNumber(int key, lua_Number value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			Push();
 			lua_pushinteger(lua_state_->GetCState(), key);
@@ -605,10 +590,8 @@ namespace LuaPlusLite {
 		}
 		
 		void SetNumber(LuaObject key, lua_Number value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key.IsNone() == false);
-			// TODO: make Set operations with LuaObject-based keys check for compatible LuaStates
 			Push();
 			key.Push();
 			lua_pushnumber(lua_state_->GetCState(), value);
@@ -617,7 +600,6 @@ namespace LuaPlusLite {
 		}
 		
 		void SetString(const char * key, const char * value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key != NULL);
 			luapluslite_assert(value != NULL);
@@ -628,7 +610,6 @@ namespace LuaPlusLite {
 		}
 		
 		void SetString(int key, const char * value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(value != NULL);
 			Push();
@@ -639,11 +620,9 @@ namespace LuaPlusLite {
 		}
 		
 		void SetString(LuaObject key, const char * value) {
-			// TODO: allow Set operation on userdata objects with appropriate metatables
 			luapluslite_assert(IsTable() == true);
 			luapluslite_assert(key.IsNone() == false);
 			luapluslite_assert(value != NULL);
-			// TODO: make Set operations with LuaObject-based keys check for compatible LuaStates
 			Push();
 			key.Push();
 			lua_pushstring(lua_state_->GetCState(), value);
