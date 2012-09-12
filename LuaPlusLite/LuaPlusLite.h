@@ -482,6 +482,41 @@ namespace LuaPlusLite {
 
 		// TODO: allow Set operation on userdata objects with appropriate metatables
 		// TODO: make Set operations with LuaObject-based keys check for compatible LuaStates
+		
+		LuaObject CreateTable(const char * key, int narr = 0, int nrec = 0) {
+			luapluslite_assert(IsTable() == true);
+			luapluslite_assert(key != NULL);
+			Push();
+			lua_createtable(lua_state_->GetCState(), narr, nrec);
+			LuaObject value(lua_state_, -1);
+			lua_setfield(lua_state_->GetCState(), -2, key);
+			lua_pop(lua_state_->GetCState(), 1);
+			return value;
+		}
+
+		LuaObject CreateTable(int key, int narr = 0, int nrec = 0) {
+			luapluslite_assert(IsTable() == true);
+			Push();
+			lua_pushinteger(lua_state_->GetCState(), key);
+			lua_createtable(lua_state_->GetCState(), narr, nrec);
+			LuaObject value(lua_state_, -1);
+			lua_settable(lua_state_->GetCState(), -3);
+			lua_pop(lua_state_->GetCState(), 1);
+			return value;
+		}
+		
+		LuaObject CreateTable(LuaObject key, int narr = 0, int nrec = 0)
+		{
+			luapluslite_assert(IsTable() == true);
+			luapluslite_assert(key.IsNone() == false);
+			Push();
+			key.Push();
+			lua_createtable(lua_state_->GetCState(), narr, nrec);
+			LuaObject value(lua_state_, -1);
+			lua_settable(lua_state_->GetCState(), -3);
+			lua_pop(lua_state_->GetCState(), 1);
+			return value;
+		}
 
 		void SetBoolean(const char * key, bool value) {
 			luapluslite_assert(IsTable() == true);
