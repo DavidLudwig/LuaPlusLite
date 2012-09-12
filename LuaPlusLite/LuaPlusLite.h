@@ -291,7 +291,31 @@ namespace LuaPlusLite {
 			lua_pop(lua_state_->GetCState(), 1);
 			return value;
 		}
-
+		
+		void * ToUserData() {
+			luapluslite_assert(IsUserData() == true);
+			Push();
+			switch (Type()) {
+				case LUA_TUSERDATA:
+				{
+					// TODO: prevent certain, maybe all, userdata objects from being dereferenced in ToUserData
+					void ** inner_value = (void **)lua_touserdata(lua_state_->GetCState(), -1);
+					lua_pop(lua_state_->GetCState(), 1);
+					return *inner_value;
+				}
+				
+				case LUA_TLIGHTUSERDATA:
+				{
+					void * value = lua_touserdata(lua_state_->GetCState(), -1);
+					lua_pop(lua_state_->GetCState(), 1);
+					return value;
+				}
+				
+				default:
+					luapluslite_assert(Type() == LUA_TUSERDATA || Type() == LUA_TLIGHTUSERDATA);
+					return NULL;
+			}
+		}
 
 #if defined(__clang__) || defined(__GNUC__)
 #pragma mark - Type Checking
@@ -627,6 +651,17 @@ namespace LuaPlusLite {
 			key.Push();
 			lua_pushstring(lua_state_->GetCState(), value);
 			lua_settable(lua_state_->GetCState(), -3);
+			lua_pop(lua_state_->GetCState(), 1);
+		}
+		
+		void SetUserData(const char * key, void * value) {
+			luapluslite_assert(IsTable() == true);
+			luapluslite_assert(key != NULL);
+			Push();
+			lua_newuserdata(lua_state_->GetCState(), sizeof(void *));
+			void ** inner_value = (void **)lua_touserdata(lua_state_->GetCState(), -1);
+			*inner_value = value;
+			lua_setfield(lua_state_->GetCState(), -2, key);
 			lua_pop(lua_state_->GetCState(), 1);
 		}
 		

@@ -326,6 +326,66 @@ int main(int argc, const char * argv[])
 		log_and_check_types_via_Is_methods(encoded_value_2, LUA_TNUMBER);
 		assert(myLuaState.GetTop() == 0);
 	}
+	
+	{
+		cout << "Assigning a full userdata value to a table:\n";
+		string key = get_random_string();
+		int dummy = 0;
+		void * value = (void *)&dummy;
+		cout << "... key: " << key << endl;
+		cout << "... value: " << value << endl;
+		LuaObject myTable;
+		myTable.AssignNewTable(&myLuaState);
+		myTable.SetUserData(key.c_str(), value);
+		
+		LuaObject encoded_value_1 = myTable.GetByName(key.c_str());
+		cout << "... encoded value type via GetByName: " << encoded_value_1.Type() << endl;
+		assert(encoded_value_1.Type() == LUA_TUSERDATA);
+		cout << "... encoded value type name via GetByName: " << encoded_value_1.TypeName() << endl;
+		assert(strcmp(encoded_value_1.TypeName(), "userdata") == 0);
+		cout << "... decoded value via GetByName: " << encoded_value_1.ToUserData() << endl;
+		assert(encoded_value_1.ToUserData() == value);
+		log_and_check_types_via_Is_methods(encoded_value_1, LUA_TUSERDATA);
+		LuaObject encoded_value_2 = myTable[key.c_str()];
+		cout << "... encoded value type via operator[]: " << encoded_value_2.Type() << endl;
+		assert(encoded_value_2.Type() == LUA_TUSERDATA);
+		cout << "... encoded value type name via operator[]: " << encoded_value_2.TypeName() << endl;
+		assert(strcmp(encoded_value_2.TypeName(), "userdata") == 0);
+		cout << "... decoded value via operator[]: " << encoded_value_2.ToUserData() << endl;
+		assert(encoded_value_2.ToUserData() == value);
+		log_and_check_types_via_Is_methods(encoded_value_2, LUA_TUSERDATA);
+		assert(myLuaState.GetTop() == 0);
+	}
+	
+	{
+		cout << "Assigning a light userdata value to a table:\n";
+		string key = get_random_string();
+		int dummy = 0;
+		void * value = (void *)&dummy;
+		cout << "... key: " << key << endl;
+		cout << "... value: " << value << endl;
+		LuaObject myTable;
+		myTable.AssignNewTable(&myLuaState);
+		myTable.SetLightUserData(key.c_str(), value);
+		
+		LuaObject encoded_value_1 = myTable.GetByName(key.c_str());
+		cout << "... encoded value type via GetByName: " << encoded_value_1.Type() << endl;
+		assert(encoded_value_1.Type() == LUA_TLIGHTUSERDATA);
+		cout << "... encoded value type name via GetByName: " << encoded_value_1.TypeName() << endl;
+		assert(strcmp(encoded_value_1.TypeName(), "userdata") == 0);
+		cout << "... decoded value via GetByName: " << encoded_value_1.ToUserData() << endl;
+		assert(encoded_value_1.ToUserData() == value);
+		log_and_check_types_via_Is_methods(encoded_value_1, LUA_TLIGHTUSERDATA);
+		LuaObject encoded_value_2 = myTable[key.c_str()];
+		cout << "... encoded value type via operator[]: " << encoded_value_2.Type() << endl;
+		assert(encoded_value_2.Type() == LUA_TLIGHTUSERDATA);
+		cout << "... encoded value type name via operator[]: " << encoded_value_2.TypeName() << endl;
+		assert(strcmp(encoded_value_2.TypeName(), "userdata") == 0);
+		cout << "... decoded value via operator[]: " << encoded_value_2.ToUserData() << endl;
+		assert(encoded_value_2.ToUserData() == value);
+		log_and_check_types_via_Is_methods(encoded_value_2, LUA_TLIGHTUSERDATA);
+		assert(myLuaState.GetTop() == 0);
+	}
 
 	{
 		int random_number_2 = rand();
