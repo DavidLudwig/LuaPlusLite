@@ -229,7 +229,39 @@ namespace LuaPlusLite {
 #if defined(__clang__) || defined(__GNUC__)
 #pragma mark - Value Retrieval
 #endif
+
+		bool GetBoolean() {
+			return ToBoolean();
+		}
 		
+		double GetDouble() {
+			return GetDouble();
+		}
+		
+		float GetFloat() {
+			return GetNumber();
+		}
+		
+		lua_Integer GetInteger() {
+			return ToInteger();
+		}
+		
+		void * GetLightUserData() {
+			return ToUserData();
+		}
+		
+		lua_Number GetNumber() {
+			return ToNumber();
+		}
+		
+		const char * GetString() {
+			return ToString();
+		}
+		
+		void * GetUserData() {
+			return GetUserData();
+		}
+
 		bool ToBoolean() {
 			if ( ! lua_state_) {
 				return false;
