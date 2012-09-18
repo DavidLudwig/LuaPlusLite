@@ -193,6 +193,16 @@ namespace LuaPlusLite {
 			luaL_checktype(c_state_, stack_index, type);
 		}
 		
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Lua Function Calling
+#endif
+
+		int PCall(int nargs, int nresults, int msgh) {
+			return lua_pcall(c_state_, nargs, nresults, msgh);
+		}
+
+		
 	private:
 		lua_State * c_state_;
 	};
