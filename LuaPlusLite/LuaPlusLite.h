@@ -110,6 +110,43 @@ namespace LuaPlusLite {
 		
 		LuaObject GetGlobals();
 
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Stack Value Type Checking + Value Retrieval
+#endif
+
+		void CheckAny(int stack_index) {
+			luaL_checkany(c_state_, stack_index);
+		}
+
+		int CheckInt(int stack_index) {
+			return luaL_checkint(c_state_, stack_index);
+		}
+
+		lua_Integer CheckInteger(int stack_index) {
+			return luaL_checkinteger(c_state_, stack_index);
+		}
+		
+		long CheckLong(int stack_index) {
+			return luaL_checklong(c_state_, stack_index);
+		}
+
+		lua_Number CheckNumber(int stack_index) {
+			return luaL_checknumber(c_state_, stack_index);
+		}
+		
+		const char * CheckStack(int stack_index) {
+			return luaL_checkstring(c_state_, stack_index);
+		}
+		
+		lua_Unsigned CheckUnsigned(int stack_index) {
+			return luaL_checkunsigned(c_state_, stack_index);
+		}
+		
+		void CheckType(int stack_index, int type) {
+			luaL_checktype(c_state_, stack_index, type);
+		}
+		
 	private:
 		lua_State * c_state_;
 	};
