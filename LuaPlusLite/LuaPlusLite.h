@@ -98,6 +98,13 @@ namespace LuaPlusLite {
 			return c_state_;
 		}
 		
+		LuaObject GetGlobals();
+
+
+#if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Stack Manipulation + Value Retrieval
+#endif
+
 		int GetTop() const {
 			return lua_gettop(c_state_);
 		}
@@ -107,8 +114,6 @@ namespace LuaPlusLite {
 		}
 		
 		LuaObject Stack(int index);
-		
-		LuaObject GetGlobals();
 
 
 #if defined(__clang__) || defined(__GNUC__)
