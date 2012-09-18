@@ -265,38 +265,38 @@ namespace LuaPlusLite {
 #pragma mark - Initialization and Destruction
 #endif
 
-		LuaObject() : lua_state_(NULL), ref_(LUA_NOREF)
+		LuaObject() : lua_state_(NULL)
 		{
 		}
 		
-		LuaObject(LuaState * state, int stack_position) : lua_state_(state), ref_(LUA_NOREF)
+		LuaObject(LuaState * state, int stack_position) : lua_state_(state)
 		{
 			if (lua_state_->GetCState()) {
 				// TODO: check for valid stack position (and throw LuaException on failure)
 				lua_pushvalue(lua_state_->GetCState(), stack_position);
-				ref_ = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
+				lua_rawsetp(lua_state_->GetCState(), LUA_REGISTRYINDEX, this);
 			}
 		}
 		
-		LuaObject(const LuaObject & src) : lua_state_(src.lua_state_), ref_(LUA_NOREF)
+		LuaObject(const LuaObject & src) : lua_state_(src.lua_state_)
 		{
-			if (lua_state_->GetCState() && src.ref_ != LUA_NOREF) {
+			if (lua_state_->GetCState()) {
 				src.Push();
-				ref_ = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
-				assert(ref_ != src.ref_);
+				lua_rawsetp(lua_state_->GetCState(), LUA_REGISTRYINDEX, this);
 			}
 		}
 		
 		~LuaObject() {
-			if (lua_state_ && lua_state_->GetCState() && ref_ != LUA_NOREF) {
-				luaL_unref(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			if (lua_state_ && lua_state_->GetCState()) {
+				lua_pushnil(lua_state_->GetCState());
+				lua_rawsetp(lua_state_->GetCState(), LUA_REGISTRYINDEX, this);
 			}
 		}
 		
 		void Reset() {
-			if (ref_ != LUA_NOREF && lua_state_ != NULL) {
-				luaL_unref(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
-				ref_ = LUA_NOREF;
+			if (lua_state_ != NULL) {
+				lua_pushnil(lua_state_->GetCState());
+				lua_rawsetp(lua_state_->GetCState(), LUA_REGISTRYINDEX, this);
 				lua_state_ = NULL;
 			}
 		}
@@ -307,7 +307,7 @@ namespace LuaPlusLite {
 		
 		void Push() const {
 			luapluslite_assert(lua_state_ != NULL);
-			lua_rawgeti(lua_state_->GetCState(), LUA_REGISTRYINDEX, ref_);
+			lua_rawgetp(lua_state_->GetCState(), LUA_REGISTRYINDEX, this);
 		}
 
 
@@ -318,50 +318,43 @@ namespace LuaPlusLite {
 		void AssignBoolean(LuaState * state, bool value) {
 			luapluslite_assert(state != NULL);
 			lua_pushboolean(state->GetCState(), value);
-			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
-			AssignToStateAndRef(state, new_ref);
+			AssignValueToState(state);
 		}
 	
 		void AssignInteger(LuaState * state, lua_Integer value) {
 			luapluslite_assert(state != NULL);
 			lua_pushinteger(state->GetCState(), value);
-			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
-			AssignToStateAndRef(state, new_ref);
+			AssignValueToState(state);
 		}
 		
 		void AssignLightUserData(LuaState * state, void * value) {
 			luapluslite_assert(state != NULL);
 			lua_pushlightuserdata(state->GetCState(), value);
-			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
-			AssignToStateAndRef(state, new_ref);
+			AssignValueToState(state);
 		}
 		
 		void AssignNumber(LuaState * state, lua_Number value) {
 			luapluslite_assert(state != NULL);
 			lua_pushnumber(state->GetCState(), value);
-			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
-			AssignToStateAndRef(state, new_ref);
+			AssignValueToState(state);
 		}
 		
 		void AssignString(LuaState * state, const char * value) {
 			luapluslite_assert(state != NULL);
 			lua_pushstring(state->GetCState(), value);
-			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
-			AssignToStateAndRef(state, new_ref);
+			AssignValueToState(state);
 		}
 		
 		void AssignNil(LuaState * state) {
 			luapluslite_assert(state != NULL);
 			lua_pushnil(state->GetCState());
-			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
-			AssignToStateAndRef(state, new_ref);
+			AssignValueToState(state);
 		}
 		
 		void AssignNewTable(LuaState * state, int narr = 0, int nrec = 0) {
 			luapluslite_assert(state != NULL);
 			lua_createtable(state->GetCState(), narr, nrec);
-			int new_ref = luaL_ref(state->GetCState(), LUA_REGISTRYINDEX);
-			AssignToStateAndRef(state, new_ref);
+			AssignValueToState(state);
 		}
 
 
@@ -409,8 +402,7 @@ namespace LuaPlusLite {
 			int value = lua_toboolean(lua_state_->GetCState(), -1);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
 			if (Type() != lua_state_->Stack(-1).Type()) {
-				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
-				AssignToStateAndRef(lua_state_, new_ref);
+				lua_rawsetp(lua_state_->GetCState(), LUA_REGISTRYINDEX, this);
 				return value;
 			}
 #endif
@@ -424,8 +416,7 @@ namespace LuaPlusLite {
 			lua_Integer value = lua_tointegerx(lua_state_->GetCState(), -1, isnum);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
 			if (Type() != lua_state_->Stack(-1).Type()) {
-				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
-				AssignToStateAndRef(lua_state_, new_ref);
+				lua_rawsetp(lua_state_->GetCState(), LUA_REGISTRYINDEX, this);
 				return value;
 			}
 #endif
@@ -439,8 +430,7 @@ namespace LuaPlusLite {
 			lua_Number value = lua_tonumberx(lua_state_->GetCState(), -1, isnum);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
 			if (Type() != lua_state_->Stack(-1).Type()) {
-				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
-				AssignToStateAndRef(lua_state_, new_ref);
+				lua_rawsetp(lua_state_->GetCState(), LUA_REGISTRYINDEX, this);
 				return value;
 			}
 #endif
@@ -454,8 +444,7 @@ namespace LuaPlusLite {
 			const char * value = lua_tolstring(lua_state_->GetCState(), -1, len);
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
 			if (Type() != lua_state_->Stack(-1).Type()) {
-				int new_ref = luaL_ref(lua_state_->GetCState(), LUA_REGISTRYINDEX);
-				AssignToStateAndRef(lua_state_, new_ref);
+				lua_rawsetp(lua_state_->GetCState(), LUA_REGISTRYINDEX, this);
 				return value;
 			}
 #endif
@@ -929,17 +918,15 @@ namespace LuaPlusLite {
 #pragma mark - Private Stuff
 #endif
 	private:
-		void AssignToStateAndRef(LuaState * state, int ref) {
-			// TODO: check validity of state and consider throwing a LuaException if it is invalid
-			// TODO: consider returning early here if 'lua_state_ == state'
-			Reset();
-			// TODO: see if lua_state_ is/should-be reference counted
+		void AssignValueToState(LuaState * state) {
+			if (lua_state_ != NULL) {
+				Reset();
+			}
 			lua_state_ = state;
-			ref_ = ref;
+			lua_rawsetp(state->GetCState(), LUA_REGISTRYINDEX, this);
 		}
 	
 		LuaState * lua_state_;
-		int ref_;
 	};
 
 
