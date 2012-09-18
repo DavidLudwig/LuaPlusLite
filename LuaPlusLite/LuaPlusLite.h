@@ -113,6 +113,42 @@ namespace LuaPlusLite {
 			lua_pop(c_state_, n);
 		}
 		
+		void PushBoolean(int b) {
+			lua_pushboolean(c_state_, b);
+		}
+		
+		void PushCClosure(lua_CFunction fn, int n) {
+			lua_pushcclosure(c_state_, fn, n);
+		}
+		
+		void PushCFunction(lua_CFunction fn) {
+			lua_pushcfunction(c_state_, fn);
+		}
+		
+		void PushInteger(lua_Integer n) {
+			lua_pushinteger(c_state_, n);
+		}
+		
+		void PushLightUserData(void * p) {
+			lua_pushlightuserdata(c_state_, p);
+		}
+		
+		void PushNil() {
+			lua_pushnil(c_state_);
+		}
+		
+		void PushNumber(lua_Number n) {
+			lua_pushnumber(c_state_, n);
+		}
+		
+		const char * PushString(const char * s) {
+			return lua_pushstring(c_state_, s);
+		}
+		
+		int PushThread() {
+			return lua_pushthread(c_state_);
+		}
+		
 		void SetTop(int n) {
 			lua_settop(c_state_, n);
 		}
