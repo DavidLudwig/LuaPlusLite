@@ -919,7 +919,7 @@ namespace LuaPlusLite {
 #endif
 	private:
 		void AssignValueToState(LuaState * state) {
-			if (lua_state_ != NULL) {
+			if (lua_state_ != NULL && lua_state_ != state) {
 				Reset();
 			}
 			lua_state_ = state;
