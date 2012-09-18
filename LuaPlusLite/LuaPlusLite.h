@@ -98,6 +98,7 @@ namespace LuaPlusLite {
 			return c_state_;
 		}
 		
+		LuaObject GetGlobal(const char * key);
 		LuaObject GetGlobals();
 
 
@@ -887,6 +888,10 @@ namespace LuaPlusLite {
 	LuaObject LuaState::Stack(int index) {
 		// TODO: check for a valid stack index
 		return LuaObject(this, index);
+	}
+	
+	LuaObject LuaState::GetGlobal(const char * key) {
+		return GetGlobals()[key];
 	}
 	
 	LuaObject LuaState::GetGlobals() {
