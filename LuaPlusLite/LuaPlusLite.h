@@ -465,21 +465,25 @@ namespace LuaPlusLite {
 			return is_match;
 		}
 		
+		bool IsConvertibleToString() const {
+			if ( ! lua_state_) {
+				return false;
+			}
+			Push();
+			const bool is_match = lua_isstring(lua_state_->GetCState(), -1);
+			lua_state_->Pop(1);
+			return is_match;
+		}
+		
 		bool IsInteger() const {
 			return IsNumber();
 		}
 		
 		bool IsString() const {
-			if ( ! lua_state_) {
-				return false;
-			}
 #if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
 			return Type() == LUA_TSTRING;
 #else
-			Push();
-			const bool is_match = lua_isstring(lua_state_->GetCState(), -1);
-			lua_state_->Pop(1);
-			return is_match;
+			return IsConvertibleToString();
 #endif
 		}
 		
