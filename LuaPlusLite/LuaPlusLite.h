@@ -113,6 +113,10 @@ namespace LuaPlusLite {
 			lua_pop(c_state_, n);
 		}
 		
+		void SetTop(int n) {
+			lua_settop(c_state_, n);
+		}
+		
 		LuaObject Stack(int index);
 
 
