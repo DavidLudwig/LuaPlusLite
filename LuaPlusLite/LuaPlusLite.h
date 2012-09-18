@@ -103,6 +103,43 @@ namespace LuaPlusLite {
 
 
 #if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Code Loading and Execution
+#endif
+
+		int DoFile(const char * filename) {
+			return luaL_dofile(c_state_, filename);
+		}
+		
+		int DoString(const char * str) {
+			return luaL_dostring(c_state_, str);
+		}
+		
+		int Load(lua_Reader reader, void * data, const char * chunk_name, const char * mode) {
+			return lua_load(c_state_, reader, data, chunk_name, mode);
+		}
+		
+		int LoadBuffer(const char * buff, size_t sz, const char * name) {
+			return luaL_loadbuffer(c_state_, buff, sz, name);
+		}
+		
+		int LoadBufferX(const char * buff, size_t sz, const char * name, const char * mode) {
+			return luaL_loadbufferx(c_state_, buff, sz, name, mode);
+		}
+
+		int LoadFile(const char * filename) {
+			return luaL_loadfile(c_state_, filename);
+		}
+		
+		int LoadFileX(const char * filename, const char * mode) {
+			return luaL_loadfilex(c_state_, filename, mode);
+		}
+		
+		int LoadString(const char * str) {
+			return luaL_loadstring(c_state_, str);
+		}
+
+
+#if defined(__clang__) || defined(__GNUC__)
 #pragma mark - Stack Manipulation + Value Retrieval
 #endif
 
