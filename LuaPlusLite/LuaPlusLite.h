@@ -140,6 +140,15 @@ namespace LuaPlusLite {
 
 
 #if defined(__clang__) || defined(__GNUC__)
+#pragma mark - Error Management
+#endif
+
+		lua_CFunction AtPanic(lua_CFunction panicf) {
+			return lua_atpanic(c_state_, panicf);
+		}
+
+
+#if defined(__clang__) || defined(__GNUC__)
 #pragma mark - Stack Manipulation + Value Retrieval
 #endif
 
