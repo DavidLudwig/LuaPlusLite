@@ -692,6 +692,8 @@ namespace LuaPlusLite {
 			lua_pop(lua_state_->GetCState(), 1);
 			return value;
 		}
+		
+		// TODO: Implement Insert(LuaObject)
 
 		void SetBoolean(const char * key, bool value) {
 			luapluslite_assert(IsTable() == true);
