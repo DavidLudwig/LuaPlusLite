@@ -42,7 +42,7 @@ static void _check(bool condition, const char * conditionAsString, int line)
         auto testFunction = [] () { \
             LuaState myLuaState; \
             lua_State * myLuaState_CState = myLuaState.GetCState(); \
-
+            if (0) { myLuaState_CState = NULL; }    /* prevent unused-variable warnings */
 
 #define TEST_END \
         }; \
