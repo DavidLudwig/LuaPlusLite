@@ -39,10 +39,13 @@ static void _check(bool condition, const char * conditionAsString, int line)
 #define TEST(STRING_NAME) \
     { \
         const char * testName = STRING_NAME; \
-        auto testFunction = [&] ()
+        auto testFunction = [] () { \
+            LuaState myLuaState; \
+            lua_State * myLuaState_CState = myLuaState.GetCState(); \
+
 
 #define TEST_END \
-        ; \
+        }; \
         logprintf("%s\n", testName); \
         testFunction(); \
     }
@@ -114,35 +117,35 @@ int main(int argc, const char * argv[])
 	logprintf("Welcome to LuaPlusLite!\n");
 	srand(0);
 	
-	logprintf("Making a LuaState\n");
-	LuaState myLuaState;
+    TEST("Retrieving C-State") {
+        //lua_State * myLuaState_CState = myLuaState.GetCState();
+        logprintf("... Inner lua_State is %p\n", myLuaState_CState);
+        logprintf("... Wrapper (a LuaState) is at %p\n", &myLuaState);
+        CHECK(myLuaState_CState != NULL);
+    } TEST_END;
 	
-	lua_State * myLuaState_CState = myLuaState.GetCState();
-	logprintf("... Done!\n");
-	logprintf("... Inner lua_State is %p\n", myLuaState_CState);
-	logprintf("... Wrapper (a LuaState) is at %p\n", &myLuaState);
-	CHECK(myLuaState_CState != NULL);
+    TEST("Retrieving the C++ LuaState via the wrapped, C-based, lua_State") {
+        LuaState * luaStateFromInnerState = LuaState::CastState(myLuaState_CState);
+        logprintf("... LuaState from inner, C-based, lua_State: %p\n", luaStateFromInnerState);
+        CHECK(luaStateFromInnerState == &myLuaState);
+        CHECK(lua_gettop(myLuaState_CState) == 0);
+    } TEST_END;
 	
-	logprintf("Retrieving the C++ LuaState via the wrapped, C-based, lua_State\n");
-	LuaState * luaStateFromInnerState = LuaState::CastState(myLuaState_CState);
-	logprintf("... LuaState from inner, C-based, lua_State: %p\n", luaStateFromInnerState);
-	CHECK(luaStateFromInnerState == &myLuaState);
-	CHECK(lua_gettop(myLuaState_CState) == 0);
-	
-	logprintf("Assigning and retrieving a random integer: ");
-	lua_Integer random_number = rand();
-	logprintf("%td\n", random_number);
-	LuaObject myEncodedInteger;
-	myEncodedInteger.AssignInteger(&myLuaState, random_number);
-	logprintf("... encoded type number is %d\n", myEncodedInteger.Type());
-	CHECK(myEncodedInteger.Type() == LUA_TNUMBER);
-	logprintf("... encoded type name is %s\n", myEncodedInteger.TypeName());
-	CHECK(strcmp(myEncodedInteger.TypeName(), "number") == 0);
-	lua_Integer decoded_number = myEncodedInteger.ToInteger();
-	logprintf("... decoded number is %td\n", decoded_number);
-	CHECK(random_number == decoded_number);
-	log_and_check_types_via_Is_methods(myEncodedInteger, LUA_TNUMBER);
-	CHECK(lua_gettop(myLuaState_CState) == 0);
+    TEST("Assigning and retrieving a random integer") {
+        lua_Integer random_number = rand();
+        logprintf("... random number: %td\n", random_number);
+        LuaObject myEncodedInteger;
+        myEncodedInteger.AssignInteger(&myLuaState, random_number);
+        logprintf("... encoded type number is %d\n", myEncodedInteger.Type());
+        CHECK(myEncodedInteger.Type() == LUA_TNUMBER);
+        logprintf("... encoded type name is %s\n", myEncodedInteger.TypeName());
+        CHECK(strcmp(myEncodedInteger.TypeName(), "number") == 0);
+        lua_Integer decoded_number = myEncodedInteger.ToInteger();
+        logprintf("... decoded number is %td\n", decoded_number);
+        CHECK(random_number == decoded_number);
+        log_and_check_types_via_Is_methods(myEncodedInteger, LUA_TNUMBER);
+        CHECK(lua_gettop(myLuaState_CState) == 0);
+    } TEST_END;
 	
     TEST("Assigning and retrieving a random number") {
 		lua_Number random_number = ((lua_Number)rand() / (lua_Number)rand());
@@ -160,64 +163,74 @@ int main(int argc, const char * argv[])
 		CHECK(lua_gettop(myLuaState_CState) == 0);
     } TEST_END;
 	
-	logprintf("Copying LuaObject containing the previously-generated, random integer: %td\n", random_number);
-	LuaObject copyOfEncodedInteger(myEncodedInteger);
-	logprintf("... encoded type number is %d\n", copyOfEncodedInteger.Type());
-	CHECK(copyOfEncodedInteger.Type() == LUA_TNUMBER);
-	logprintf("... encoded type name is %s\n", copyOfEncodedInteger.TypeName());
-	CHECK(strcmp(copyOfEncodedInteger.TypeName(), "number") == 0);
-	lua_Integer copy_of_decoded_number = copyOfEncodedInteger.ToInteger();
-	logprintf("... decoded number is %td\n", copy_of_decoded_number);
-	CHECK(random_number == copy_of_decoded_number);
-	log_and_check_types_via_Is_methods(copyOfEncodedInteger, LUA_TNUMBER);
-	CHECK(lua_gettop(myLuaState_CState) == 0);
+    TEST("Copying LuaObject containing a previously-generated, random integer") {
+        lua_Integer random_number = rand();
+        logprintf("... random number: %td\n", random_number);
+        LuaObject myEncodedInteger;
+        myEncodedInteger.AssignInteger(&myLuaState, random_number);
+        LuaObject copyOfEncodedInteger(myEncodedInteger);
+        logprintf("... encoded type number is %d\n", copyOfEncodedInteger.Type());
+        CHECK(copyOfEncodedInteger.Type() == LUA_TNUMBER);
+        logprintf("... encoded type name is %s\n", copyOfEncodedInteger.TypeName());
+        CHECK(strcmp(copyOfEncodedInteger.TypeName(), "number") == 0);
+        lua_Integer copy_of_decoded_number = copyOfEncodedInteger.ToInteger();
+        logprintf("... decoded number is %td\n", copy_of_decoded_number);
+        CHECK(random_number == copy_of_decoded_number);
+        log_and_check_types_via_Is_methods(copyOfEncodedInteger, LUA_TNUMBER);
+        CHECK(lua_gettop(myLuaState_CState) == 0);
+    } TEST_END;
 	
-	logprintf("Assigning and retrieving the previously-generated random integer via use of the Lua stack");
-	lua_pushinteger(myLuaState.GetCState(), random_number);
-	LuaObject stackMadeEncodedInteger(&myLuaState, -1);
-	lua_pop(myLuaState.GetCState(), 1);
-	logprintf("... encoded type number is %d\n", stackMadeEncodedInteger.Type());
-	CHECK(stackMadeEncodedInteger.Type() == LUA_TNUMBER);
-	logprintf("... encoded type name is %s\n", stackMadeEncodedInteger.TypeName());
-	CHECK(strcmp(stackMadeEncodedInteger.TypeName(), "number") == 0);
-	lua_Integer stack_made_decoded_number = stackMadeEncodedInteger.ToInteger();
-	logprintf("... decoded number is %td\n", stack_made_decoded_number);
-	CHECK(random_number == stack_made_decoded_number);
-	log_and_check_types_via_Is_methods(stackMadeEncodedInteger, LUA_TNUMBER);
-	CHECK(lua_gettop(myLuaState_CState) == 0);
+	TEST("Assigning and retrieving the previously-generated random integer via use of the Lua stack") {
+        lua_Integer random_number = rand();
+        logprintf("... random number: %td\n", random_number);
+        lua_pushinteger(myLuaState.GetCState(), random_number);
+        LuaObject stackMadeEncodedInteger(&myLuaState, -1);
+        lua_pop(myLuaState.GetCState(), 1);
+        logprintf("... encoded type number is %d\n", stackMadeEncodedInteger.Type());
+        CHECK(stackMadeEncodedInteger.Type() == LUA_TNUMBER);
+        logprintf("... encoded type name is %s\n", stackMadeEncodedInteger.TypeName());
+        CHECK(strcmp(stackMadeEncodedInteger.TypeName(), "number") == 0);
+        lua_Integer stack_made_decoded_number = stackMadeEncodedInteger.ToInteger();
+        logprintf("... decoded number is %td\n", stack_made_decoded_number);
+        CHECK(random_number == stack_made_decoded_number);
+        log_and_check_types_via_Is_methods(stackMadeEncodedInteger, LUA_TNUMBER);
+        CHECK(lua_gettop(myLuaState_CState) == 0);
+    } TEST_END;
 	
-	logprintf("Assigning and retrieving a random string: ");
-	char random_string[16];
-	const size_t num_chars_in_random_string = sizeof(random_string) / sizeof(char);
-	for (int i = 0; i < (num_chars_in_random_string - 1); i++) {
-		int ch = rand() % 26;
-		ch += 'A';
-		random_string[i] = ch;
-	}
-	random_string[num_chars_in_random_string - 1] = 0;
-	logprintf("%s\n", random_string);
-	LuaObject myEncodedString;
-	myEncodedString.AssignString(&myLuaState, random_string);
-	logprintf("... encoded type number is %d\n", myEncodedString.Type());
-	CHECK(myEncodedString.Type() == LUA_TSTRING);
-	logprintf("... encoded type name is %s\n", myEncodedString.TypeName());
-	CHECK(strcmp(myEncodedString.TypeName(), "string") == 0);
-	const char * decoded_string = myEncodedString.ToString();
-	logprintf("... decoded string is %s\n", decoded_string);
-	CHECK(decoded_string != NULL);
-	CHECK(strcmp(random_string, decoded_string) == 0);
-	log_and_check_types_via_Is_methods(myEncodedString, LUA_TSTRING);
-	CHECK(lua_gettop(myLuaState_CState) == 0);
+    TEST("Assigning and retrieving a random string") {
+        char random_string[16];
+        const size_t num_chars_in_random_string = sizeof(random_string) / sizeof(char);
+        for (int i = 0; i < (num_chars_in_random_string - 1); i++) {
+            int ch = rand() % 26;
+            ch += 'A';
+            random_string[i] = ch;
+        }
+        random_string[num_chars_in_random_string - 1] = 0;
+        logprintf("%s\n", random_string);
+        LuaObject myEncodedString;
+        myEncodedString.AssignString(&myLuaState, random_string);
+        logprintf("... encoded type number is %d\n", myEncodedString.Type());
+        CHECK(myEncodedString.Type() == LUA_TSTRING);
+        logprintf("... encoded type name is %s\n", myEncodedString.TypeName());
+        CHECK(strcmp(myEncodedString.TypeName(), "string") == 0);
+        const char * decoded_string = myEncodedString.ToString();
+        logprintf("... decoded string is %s\n", decoded_string);
+        CHECK(decoded_string != NULL);
+        CHECK(strcmp(random_string, decoded_string) == 0);
+        log_and_check_types_via_Is_methods(myEncodedString, LUA_TSTRING);
+        CHECK(lua_gettop(myLuaState_CState) == 0);
+    } TEST_END;
 	
-	logprintf("Assigning and retrieving a nil value\n");
-	LuaObject myNilObject;
-	myNilObject.AssignNil(&myLuaState);
-	logprintf("... encoded type number is %d\n", myNilObject.Type());
-	CHECK(myNilObject.Type() == LUA_TNIL);
-	logprintf("... encoded type name is %s\n", myNilObject.TypeName());
-	CHECK(strcmp(myNilObject.TypeName(), "nil") == 0);
-	log_and_check_types_via_Is_methods(myNilObject, LUA_TNIL);
-	CHECK(lua_gettop(myLuaState_CState) == 0);
+    TEST("Assigning and retrieving a nil value") {
+        LuaObject myNilObject;
+        myNilObject.AssignNil(&myLuaState);
+        logprintf("... encoded type number is %d\n", myNilObject.Type());
+        CHECK(myNilObject.Type() == LUA_TNIL);
+        logprintf("... encoded type name is %s\n", myNilObject.TypeName());
+        CHECK(strcmp(myNilObject.TypeName(), "nil") == 0);
+        log_and_check_types_via_Is_methods(myNilObject, LUA_TNIL);
+        CHECK(lua_gettop(myLuaState_CState) == 0);
+    } TEST_END;
 	
     TEST("Inspecting an uninitialized LuaObject") {
 		LuaObject uninitializedObject;
@@ -252,19 +265,22 @@ int main(int argc, const char * argv[])
 		log_and_check_types_via_Is_methods(encoded_boolean, LUA_TBOOLEAN);
 	} TEST_END;
 	
-	logprintf("Assigning a new table\n");
-	LuaObject myTable;
-	myTable.AssignNewTable(&myLuaState);
-	logprintf("... encoded type number is %d\n", myTable.Type());
-	CHECK(myTable.Type() == LUA_TTABLE);
-	logprintf("... encoded type name is %s\n", myTable.TypeName());
-	CHECK(strcmp(myTable.TypeName(), "table") == 0);
-	log_and_check_types_via_Is_methods(myTable, LUA_TTABLE);
-	CHECK(lua_gettop(myLuaState_CState) == 0);
+    TEST("Assigning a new table") {
+        LuaObject myTable;
+        myTable.AssignNewTable(&myLuaState);
+        logprintf("... encoded type number is %d\n", myTable.Type());
+        CHECK(myTable.Type() == LUA_TTABLE);
+        logprintf("... encoded type name is %s\n", myTable.TypeName());
+        CHECK(strcmp(myTable.TypeName(), "table") == 0);
+        log_and_check_types_via_Is_methods(myTable, LUA_TTABLE);
+        CHECK(lua_gettop(myLuaState_CState) == 0);
+    } TEST_END;
 	
     TEST("Creating and retriving a table entry using a random string as a key and a random number as a value") {
 		int value = rand();
 		string key = get_random_string();
+        LuaObject myTable;
+        myTable.AssignNewTable(&myLuaState);
         logprintf("... key: %s\n", key.c_str());
         logprintf("... value: %d\n", value);
 		myTable.SetInteger(key.c_str(), value);
