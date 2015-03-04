@@ -22,6 +22,18 @@ extern "C" {
 #include "lobject.h"
 }
 
+static int fail_count = 0;
+
+static void _check(bool condition, const char * conditionAsString, int line)
+{
+    if ( ! condition) {
+        printf("ASSERTION FAILED: (%s) at line %d\n", conditionAsString, line);
+        ++fail_count;
+    }
+}
+
+#define CHECK(CONDITION) _check((bool)(CONDITION), #CONDITION, __LINE__)
+
 static string get_random_string(int num_chars = 15) {
 	string random_string;
 	random_string.resize(num_chars);
@@ -45,43 +57,43 @@ static bool is_string_convertible_to_number(const char * str) {
 void log_and_check_types_via_Is_methods(LuaObject & obj, int actual) {
 	cout << "... checking type via Is methods:\n";
 	cout << "....... IsBoolean?: " << obj.IsBoolean() << endl;
-	assert(obj.IsBoolean() == (actual == LUA_TBOOLEAN));
+	CHECK(obj.IsBoolean() == (actual == LUA_TBOOLEAN));
 	cout << "....... IsCFunction?: " << obj.IsCFunction() << endl;
-	//assert(obj.IsCFunction() == (actual == LUA_TFUNCTION));	// Not applied as the value might be a non-C function.
+	//CHECK(obj.IsCFunction() == (actual == LUA_TFUNCTION));	// Not applied as the value might be a non-C function.
 	cout << "....... IsFunction?: " << obj.IsFunction() << endl;
-	assert(obj.IsFunction() == (actual == LUA_TFUNCTION));
+	CHECK(obj.IsFunction() == (actual == LUA_TFUNCTION));
 	cout << "....... IsInteger?: " << obj.IsInteger() << endl;
 #if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
-	assert(obj.IsInteger() == (actual == LUA_TNUMBER));
+	CHECK(obj.IsInteger() == (actual == LUA_TNUMBER));
 #else
-	assert(obj.IsInteger() == (actual == LUA_TNUMBER || (actual == LUA_TSTRING && is_string_convertible_to_number(obj.ToString()))));
+	CHECK(obj.IsInteger() == (actual == LUA_TNUMBER || (actual == LUA_TSTRING && is_string_convertible_to_number(obj.ToString()))));
 #endif
 	cout << "....... IsLightUserData?: " << obj.IsLightUserData() << endl;
-	assert(obj.IsLightUserData() == (actual == LUA_TLIGHTUSERDATA));
+	CHECK(obj.IsLightUserData() == (actual == LUA_TLIGHTUSERDATA));
 	cout << "....... IsNil?: " << obj.IsNil() << endl;
-	assert(obj.IsNil() == (actual == LUA_TNIL));
+	CHECK(obj.IsNil() == (actual == LUA_TNIL));
 	cout << "....... IsNone?: " << obj.IsNone() << endl;
-	assert(obj.IsNone() == (actual == LUA_TNONE));
+	CHECK(obj.IsNone() == (actual == LUA_TNONE));
 	cout << "....... IsNoneOrNil?: " << obj.IsNoneOrNil() << endl;
-	assert(obj.IsNoneOrNil() == (actual == LUA_TNONE || actual == LUA_TNIL));
+	CHECK(obj.IsNoneOrNil() == (actual == LUA_TNONE || actual == LUA_TNIL));
 	cout << "....... IsNumber?: " << obj.IsNumber() << endl;
 #if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
-	assert(obj.IsNumber() == (actual == LUA_TNUMBER));
+	CHECK(obj.IsNumber() == (actual == LUA_TNUMBER));
 #else
-	assert(obj.IsNumber() == (actual == LUA_TNUMBER || (actual == LUA_TSTRING && is_string_convertible_to_number(obj.ToString()))));
+	CHECK(obj.IsNumber() == (actual == LUA_TNUMBER || (actual == LUA_TSTRING && is_string_convertible_to_number(obj.ToString()))));
 #endif
 	cout << "....... IsString?: " << obj.IsString() << endl;
 #if LuaPlusLite__IsString_and_IsNumber_only_match_explicitly == 1
-	assert(obj.IsString() == (actual == LUA_TSTRING));
+	CHECK(obj.IsString() == (actual == LUA_TSTRING));
 #else
-	assert(obj.IsString() == (actual == LUA_TSTRING || actual == LUA_TNUMBER));
+	CHECK(obj.IsString() == (actual == LUA_TSTRING || actual == LUA_TNUMBER));
 #endif
 	cout << "....... IsTable?: " << obj.IsTable() << endl;
-	assert(obj.IsTable() == (actual == LUA_TTABLE));
+	CHECK(obj.IsTable() == (actual == LUA_TTABLE));
 	cout << "....... IsThread?: " << obj.IsThread() << endl;
-	assert(obj.IsThread() == (actual == LUA_TTHREAD));
+	CHECK(obj.IsThread() == (actual == LUA_TTHREAD));
 	cout << "....... IsUserData?: " << obj.IsUserData() << endl;
-	assert(obj.IsUserData() == (actual == LUA_TUSERDATA || actual == LUA_TLIGHTUSERDATA));
+	CHECK(obj.IsUserData() == (actual == LUA_TUSERDATA || actual == LUA_TLIGHTUSERDATA));
 }
 
 int main(int argc, const char * argv[])
@@ -96,13 +108,13 @@ int main(int argc, const char * argv[])
 	cout << "... Done!\n";
 	cout << "... Inner lua_State is " << myLuaState_CState << endl;
 	cout << "... Wrapper (a LuaState) is at " << &myLuaState << endl;
-	assert(myLuaState_CState != NULL);
+	CHECK(myLuaState_CState != NULL);
 	
 	cout << "Retrieving the C++ LuaState via the wrapped, C-based, lua_State\n";
 	LuaState * luaStateFromInnerState = LuaState::CastState(myLuaState_CState);
 	cout << "... LuaState from inner, C-based, lua_State: " << luaStateFromInnerState << endl;
-	assert(luaStateFromInnerState == &myLuaState);
-	assert(lua_gettop(myLuaState_CState) == 0);
+	CHECK(luaStateFromInnerState == &myLuaState);
+	CHECK(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning and retrieving a random integer: ";
 	lua_Integer random_number = rand();
@@ -110,14 +122,14 @@ int main(int argc, const char * argv[])
 	LuaObject myEncodedInteger;
 	myEncodedInteger.AssignInteger(&myLuaState, random_number);
 	cout << "... encoded type number is " << myEncodedInteger.Type() << endl;
-	assert(myEncodedInteger.Type() == LUA_TNUMBER);
+	CHECK(myEncodedInteger.Type() == LUA_TNUMBER);
 	cout << "... encoded type name " << myEncodedInteger.TypeName() << endl;
-	assert(strcmp(myEncodedInteger.TypeName(), "number") == 0);
+	CHECK(strcmp(myEncodedInteger.TypeName(), "number") == 0);
 	lua_Integer decoded_number = myEncodedInteger.ToInteger();
 	cout << "... decoded number is " << decoded_number << endl;
-	assert(random_number == decoded_number);
+	CHECK(random_number == decoded_number);
 	log_and_check_types_via_Is_methods(myEncodedInteger, LUA_TNUMBER);
-	assert(lua_gettop(myLuaState_CState) == 0);
+	CHECK(lua_gettop(myLuaState_CState) == 0);
 	
 	{
 		cout << "Assigning and retrieving a random number: ";
@@ -126,41 +138,41 @@ int main(int argc, const char * argv[])
 		LuaObject myEncodedNumber;
 		myEncodedNumber.AssignNumber(&myLuaState, random_number);
 		cout << "... encoded type number is " << myEncodedNumber.Type() << endl;
-		assert(myEncodedNumber.Type() == LUA_TNUMBER);
+		CHECK(myEncodedNumber.Type() == LUA_TNUMBER);
 		cout << "... encoded type name " << myEncodedNumber.TypeName() << endl;
-		assert(strcmp(myEncodedNumber.TypeName(), "number") == 0);
+		CHECK(strcmp(myEncodedNumber.TypeName(), "number") == 0);
 		lua_Number decoded_number = myEncodedNumber.ToNumber();
 		cout << "... decoded number is " << decoded_number << endl;
-		assert(random_number == decoded_number);
+		CHECK(random_number == decoded_number);
 		log_and_check_types_via_Is_methods(myEncodedNumber, LUA_TNUMBER);
-		assert(lua_gettop(myLuaState_CState) == 0);
+		CHECK(lua_gettop(myLuaState_CState) == 0);
 	}
 	
 	cout << "Copying LuaObject containing the previously-generated, random integer: " << random_number << endl;
 	LuaObject copyOfEncodedInteger(myEncodedInteger);
 	cout << "... encoded type number is " << copyOfEncodedInteger.Type() << endl;
-	assert(copyOfEncodedInteger.Type() == LUA_TNUMBER);
+	CHECK(copyOfEncodedInteger.Type() == LUA_TNUMBER);
 	cout << "... encoded type name " << copyOfEncodedInteger.TypeName() << endl;
-	assert(strcmp(copyOfEncodedInteger.TypeName(), "number") == 0);
+	CHECK(strcmp(copyOfEncodedInteger.TypeName(), "number") == 0);
 	lua_Integer copy_of_decoded_number = copyOfEncodedInteger.ToInteger();
 	cout << "... decoded number is " << copy_of_decoded_number << endl;
-	assert(random_number == copy_of_decoded_number);
+	CHECK(random_number == copy_of_decoded_number);
 	log_and_check_types_via_Is_methods(copyOfEncodedInteger, LUA_TNUMBER);
-	assert(lua_gettop(myLuaState_CState) == 0);
+	CHECK(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning and retrieving the previously-generated random integer via use of the Lua stack.\n";
 	lua_pushinteger(myLuaState.GetCState(), random_number);
 	LuaObject stackMadeEncodedInteger(&myLuaState, -1);
 	lua_pop(myLuaState.GetCState(), 1);
 	cout << "... encoded type number is " << stackMadeEncodedInteger.Type() << endl;
-	assert(stackMadeEncodedInteger.Type() == LUA_TNUMBER);
+	CHECK(stackMadeEncodedInteger.Type() == LUA_TNUMBER);
 	cout << "... encoded type name " << stackMadeEncodedInteger.TypeName() << endl;
-	assert(strcmp(stackMadeEncodedInteger.TypeName(), "number") == 0);
+	CHECK(strcmp(stackMadeEncodedInteger.TypeName(), "number") == 0);
 	lua_Integer stack_made_decoded_number = stackMadeEncodedInteger.ToInteger();
 	cout << "... decoded number is " << stack_made_decoded_number << endl;
-	assert(random_number == stack_made_decoded_number);
+	CHECK(random_number == stack_made_decoded_number);
 	log_and_check_types_via_Is_methods(stackMadeEncodedInteger, LUA_TNUMBER);
-	assert(lua_gettop(myLuaState_CState) == 0);
+	CHECK(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning and retrieving a random string: ";
 	char random_string[16];
@@ -175,33 +187,33 @@ int main(int argc, const char * argv[])
 	LuaObject myEncodedString;
 	myEncodedString.AssignString(&myLuaState, random_string);
 	cout << "... encoded type number is " << myEncodedString.Type() << endl;
-	assert(myEncodedString.Type() == LUA_TSTRING);
+	CHECK(myEncodedString.Type() == LUA_TSTRING);
 	cout << "... encoded type name " << myEncodedString.TypeName() << endl;
-	assert(strcmp(myEncodedString.TypeName(), "string") == 0);
+	CHECK(strcmp(myEncodedString.TypeName(), "string") == 0);
 	const char * decoded_string = myEncodedString.ToString();
 	cout << "... decoded string is " << decoded_string << endl;
-	assert(decoded_string != NULL);
-	assert(strcmp(random_string, decoded_string) == 0);
+	CHECK(decoded_string != NULL);
+	CHECK(strcmp(random_string, decoded_string) == 0);
 	log_and_check_types_via_Is_methods(myEncodedString, LUA_TSTRING);
-	assert(lua_gettop(myLuaState_CState) == 0);
+	CHECK(lua_gettop(myLuaState_CState) == 0);
 	
 	cout << "Assigning and retrieving a nil value\n";
 	LuaObject myNilObject;
 	myNilObject.AssignNil(&myLuaState);
 	cout << "... encoded type number is " << myNilObject.Type() << endl;
-	assert(myNilObject.Type() == LUA_TNIL);
+	CHECK(myNilObject.Type() == LUA_TNIL);
 	cout << "... encoded type name " << myNilObject.TypeName() << endl;
-	assert(strcmp(myNilObject.TypeName(), "nil") == 0);
+	CHECK(strcmp(myNilObject.TypeName(), "nil") == 0);
 	log_and_check_types_via_Is_methods(myNilObject, LUA_TNIL);
-	assert(lua_gettop(myLuaState_CState) == 0);
+	CHECK(lua_gettop(myLuaState_CState) == 0);
 	
 	{
 		cout << "Inspecting an uninitialized LuaObject:\n";
 		LuaObject uninitializedObject;
 		cout << "... encoded type number is " << uninitializedObject.Type() << endl;
-		assert(uninitializedObject.Type() == LUA_TNONE);
+		CHECK(uninitializedObject.Type() == LUA_TNONE);
 		cout << "... encoded type name: " << uninitializedObject.TypeName() << endl;
-		assert(strcmp(uninitializedObject.TypeName(), "no value") == 0);
+		CHECK(strcmp(uninitializedObject.TypeName(), "no value") == 0);
 		log_and_check_types_via_Is_methods(uninitializedObject, LUA_TNONE);
 	}
 	
@@ -210,9 +222,9 @@ int main(int argc, const char * argv[])
 		LuaObject encoded_boolean;
 		encoded_boolean.AssignBoolean(&myLuaState, true);
 		cout << "... encoded type number is " << encoded_boolean.Type() << endl;
-		assert(encoded_boolean.Type() == LUA_TBOOLEAN);
+		CHECK(encoded_boolean.Type() == LUA_TBOOLEAN);
 		cout << "... encoded type name: " << encoded_boolean.TypeName() << endl;
-		assert(strcmp(encoded_boolean.TypeName(), "boolean") == 0);
+		CHECK(strcmp(encoded_boolean.TypeName(), "boolean") == 0);
 		bool decoded_boolean = encoded_boolean.ToBoolean();
 		cout << "... decoded value: " << decoded_boolean << endl;
 		log_and_check_types_via_Is_methods(encoded_boolean, LUA_TBOOLEAN);
@@ -223,9 +235,9 @@ int main(int argc, const char * argv[])
 		LuaObject encoded_boolean;
 		encoded_boolean.AssignBoolean(&myLuaState, false);
 		cout << "... encoded type number is " << encoded_boolean.Type() << endl;
-		assert(encoded_boolean.Type() == LUA_TBOOLEAN);
+		CHECK(encoded_boolean.Type() == LUA_TBOOLEAN);
 		cout << "... encoded type name: " << encoded_boolean.TypeName() << endl;
-		assert(strcmp(encoded_boolean.TypeName(), "boolean") == 0);
+		CHECK(strcmp(encoded_boolean.TypeName(), "boolean") == 0);
 		bool decoded_boolean = encoded_boolean.ToBoolean();
 		cout << "... decoded value: " << decoded_boolean << endl;
 		log_and_check_types_via_Is_methods(encoded_boolean, LUA_TBOOLEAN);
@@ -235,11 +247,11 @@ int main(int argc, const char * argv[])
 	LuaObject myTable;
 	myTable.AssignNewTable(&myLuaState);
 	cout << "... encoded type number is " << myTable.Type() << endl;
-	assert(myTable.Type() == LUA_TTABLE);
+	CHECK(myTable.Type() == LUA_TTABLE);
 	cout << "... encoded type name " << myTable.TypeName() << endl;
-	assert(strcmp(myTable.TypeName(), "table") == 0);
+	CHECK(strcmp(myTable.TypeName(), "table") == 0);
 	log_and_check_types_via_Is_methods(myTable, LUA_TTABLE);
-	assert(lua_gettop(myLuaState_CState) == 0);
+	CHECK(lua_gettop(myLuaState_CState) == 0);
 	
 	{
 		int value = rand();
@@ -250,19 +262,19 @@ int main(int argc, const char * argv[])
 		myTable.SetInteger(key.c_str(), value);
 		LuaObject encoded_value_1 = myTable.GetByName(key.c_str());
 		cout << "... encoded value type via GetByName: " << encoded_value_1.Type() << endl;
-		assert(encoded_value_1.Type() == LUA_TNUMBER);
+		CHECK(encoded_value_1.Type() == LUA_TNUMBER);
 		cout << "... encoded value type name via GetByName: " << encoded_value_1.TypeName() << endl;
-		assert(strcmp(encoded_value_1.TypeName(), "number") == 0);
+		CHECK(strcmp(encoded_value_1.TypeName(), "number") == 0);
 		cout << "... decoded value via GetByName: " << encoded_value_1.ToInteger() << endl;
-		assert(encoded_value_1.ToInteger() == value);
+		CHECK(encoded_value_1.ToInteger() == value);
 		log_and_check_types_via_Is_methods(encoded_value_1, LUA_TNUMBER);
 		LuaObject encoded_value_2 = myTable[key.c_str()];
 		cout << "... encoded value type via operator[]: " << encoded_value_2.Type() << endl;
-		assert(encoded_value_2.Type() == LUA_TNUMBER);
+		CHECK(encoded_value_2.Type() == LUA_TNUMBER);
 		cout << "... encoded value type name via operator[]: " << encoded_value_2.TypeName() << endl;
-		assert(strcmp(encoded_value_2.TypeName(), "number") == 0);
+		CHECK(strcmp(encoded_value_2.TypeName(), "number") == 0);
 		cout << "... decoded value via operator[]: " << encoded_value_2.ToInteger() << endl;
-		assert(encoded_value_2.ToInteger() == value);
+		CHECK(encoded_value_2.ToInteger() == value);
 		log_and_check_types_via_Is_methods(encoded_value_2, LUA_TNUMBER);
 	}
 	
@@ -278,21 +290,21 @@ int main(int argc, const char * argv[])
 
 		LuaObject encoded_value_1 = myTable.GetByIndex(key);
 		cout << "... encoded value type via GetByIndex: " << encoded_value_1.Type() << endl;
-		assert(encoded_value_1.Type() == LUA_TNUMBER);
+		CHECK(encoded_value_1.Type() == LUA_TNUMBER);
 		cout << "... encoded value type name via GetByIndex: " << encoded_value_1.TypeName() << endl;
-		assert(strcmp(encoded_value_1.TypeName(), "number") == 0);
+		CHECK(strcmp(encoded_value_1.TypeName(), "number") == 0);
 		cout << "... decoded value via GetByIndex: " << encoded_value_1.ToInteger() << endl;
-		assert(encoded_value_1.ToInteger() == value);
+		CHECK(encoded_value_1.ToInteger() == value);
 		log_and_check_types_via_Is_methods(encoded_value_1, LUA_TNUMBER);
 		LuaObject encoded_value_2 = myTable[key];
 		cout << "... encoded value type via operator[]: " << encoded_value_2.Type() << endl;
-		assert(encoded_value_2.Type() == LUA_TNUMBER);
+		CHECK(encoded_value_2.Type() == LUA_TNUMBER);
 		cout << "... encoded value type name via operator[]: " << encoded_value_2.TypeName() << endl;
-		assert(strcmp(encoded_value_2.TypeName(), "number") == 0);
+		CHECK(strcmp(encoded_value_2.TypeName(), "number") == 0);
 		cout << "... decoded value via operator[]: " << encoded_value_2.ToInteger() << endl;
-		assert(encoded_value_2.ToInteger() == value);
+		CHECK(encoded_value_2.ToInteger() == value);
 		log_and_check_types_via_Is_methods(encoded_value_2, LUA_TNUMBER);
-		assert(myLuaState.GetTop() == 0);
+		CHECK(myLuaState.GetTop() == 0);
 	}
 	
 	{
@@ -310,21 +322,21 @@ int main(int argc, const char * argv[])
 		
 		LuaObject encoded_value_1 = myTable.GetByObject(key);
 		cout << "... encoded value type via GetByObject: " << encoded_value_1.Type() << endl;
-		assert(encoded_value_1.Type() == LUA_TNUMBER);
+		CHECK(encoded_value_1.Type() == LUA_TNUMBER);
 		cout << "... encoded value type name via GetByObject: " << encoded_value_1.TypeName() << endl;
-		assert(strcmp(encoded_value_1.TypeName(), "number") == 0);
+		CHECK(strcmp(encoded_value_1.TypeName(), "number") == 0);
 		cout << "... decoded value via GetByObject: " << encoded_value_1.ToInteger() << endl;
-		assert(encoded_value_1.ToInteger() == value);
+		CHECK(encoded_value_1.ToInteger() == value);
 		log_and_check_types_via_Is_methods(encoded_value_1, LUA_TNUMBER);
 		LuaObject encoded_value_2 = myTable[key];
 		cout << "... encoded value type via operator[]: " << encoded_value_2.Type() << endl;
-		assert(encoded_value_2.Type() == LUA_TNUMBER);
+		CHECK(encoded_value_2.Type() == LUA_TNUMBER);
 		cout << "... encoded value type name via operator[]: " << encoded_value_2.TypeName() << endl;
-		assert(strcmp(encoded_value_2.TypeName(), "number") == 0);
+		CHECK(strcmp(encoded_value_2.TypeName(), "number") == 0);
 		cout << "... decoded value via operator[]: " << encoded_value_2.ToInteger() << endl;
-		assert(encoded_value_2.ToInteger() == value);
+		CHECK(encoded_value_2.ToInteger() == value);
 		log_and_check_types_via_Is_methods(encoded_value_2, LUA_TNUMBER);
-		assert(myLuaState.GetTop() == 0);
+		CHECK(myLuaState.GetTop() == 0);
 	}
 	
 	{
@@ -340,21 +352,21 @@ int main(int argc, const char * argv[])
 		
 		LuaObject encoded_value_1 = myTable.GetByName(key.c_str());
 		cout << "... encoded value type via GetByName: " << encoded_value_1.Type() << endl;
-		assert(encoded_value_1.Type() == LUA_TUSERDATA);
+		CHECK(encoded_value_1.Type() == LUA_TUSERDATA);
 		cout << "... encoded value type name via GetByName: " << encoded_value_1.TypeName() << endl;
-		assert(strcmp(encoded_value_1.TypeName(), "userdata") == 0);
+		CHECK(strcmp(encoded_value_1.TypeName(), "userdata") == 0);
 		cout << "... decoded value via GetByName: " << encoded_value_1.ToUserData() << endl;
-		assert(encoded_value_1.ToUserData() == value);
+		CHECK(encoded_value_1.ToUserData() == value);
 		log_and_check_types_via_Is_methods(encoded_value_1, LUA_TUSERDATA);
 		LuaObject encoded_value_2 = myTable[key.c_str()];
 		cout << "... encoded value type via operator[]: " << encoded_value_2.Type() << endl;
-		assert(encoded_value_2.Type() == LUA_TUSERDATA);
+		CHECK(encoded_value_2.Type() == LUA_TUSERDATA);
 		cout << "... encoded value type name via operator[]: " << encoded_value_2.TypeName() << endl;
-		assert(strcmp(encoded_value_2.TypeName(), "userdata") == 0);
+		CHECK(strcmp(encoded_value_2.TypeName(), "userdata") == 0);
 		cout << "... decoded value via operator[]: " << encoded_value_2.ToUserData() << endl;
-		assert(encoded_value_2.ToUserData() == value);
+		CHECK(encoded_value_2.ToUserData() == value);
 		log_and_check_types_via_Is_methods(encoded_value_2, LUA_TUSERDATA);
-		assert(myLuaState.GetTop() == 0);
+		CHECK(myLuaState.GetTop() == 0);
 	}
 	
 	{
@@ -370,21 +382,21 @@ int main(int argc, const char * argv[])
 		
 		LuaObject encoded_value_1 = myTable.GetByName(key.c_str());
 		cout << "... encoded value type via GetByName: " << encoded_value_1.Type() << endl;
-		assert(encoded_value_1.Type() == LUA_TLIGHTUSERDATA);
+		CHECK(encoded_value_1.Type() == LUA_TLIGHTUSERDATA);
 		cout << "... encoded value type name via GetByName: " << encoded_value_1.TypeName() << endl;
-		assert(strcmp(encoded_value_1.TypeName(), "userdata") == 0);
+		CHECK(strcmp(encoded_value_1.TypeName(), "userdata") == 0);
 		cout << "... decoded value via GetByName: " << encoded_value_1.ToUserData() << endl;
-		assert(encoded_value_1.ToUserData() == value);
+		CHECK(encoded_value_1.ToUserData() == value);
 		log_and_check_types_via_Is_methods(encoded_value_1, LUA_TLIGHTUSERDATA);
 		LuaObject encoded_value_2 = myTable[key.c_str()];
 		cout << "... encoded value type via operator[]: " << encoded_value_2.Type() << endl;
-		assert(encoded_value_2.Type() == LUA_TLIGHTUSERDATA);
+		CHECK(encoded_value_2.Type() == LUA_TLIGHTUSERDATA);
 		cout << "... encoded value type name via operator[]: " << encoded_value_2.TypeName() << endl;
-		assert(strcmp(encoded_value_2.TypeName(), "userdata") == 0);
+		CHECK(strcmp(encoded_value_2.TypeName(), "userdata") == 0);
 		cout << "... decoded value via operator[]: " << encoded_value_2.ToUserData() << endl;
-		assert(encoded_value_2.ToUserData() == value);
+		CHECK(encoded_value_2.ToUserData() == value);
 		log_and_check_types_via_Is_methods(encoded_value_2, LUA_TLIGHTUSERDATA);
-		assert(myLuaState.GetTop() == 0);
+		CHECK(myLuaState.GetTop() == 0);
 	}
 
 	{
@@ -395,15 +407,15 @@ int main(int argc, const char * argv[])
 		lua_pushinteger(myLuaState_CState, random_number_2);
 		int new_stack_top = myLuaState.GetTop();
 		cout << "... new stack top: " << new_stack_top << endl;
-		assert(new_stack_top = original_stack_top + 1);
+		CHECK(new_stack_top = original_stack_top + 1);
 		int type_from_Stack_position_1 = myLuaState.Stack(1).Type();
 		cout << "... type from Stack(1): " << type_from_Stack_position_1 << endl;
 		const char * type_name_from_stack_position_1 = myLuaState.Stack(1).TypeName();
 		cout << "... type name from Stack(1): " << type_name_from_stack_position_1 << endl;
-		assert(strcmp(type_name_from_stack_position_1, "number") == 0);
+		CHECK(strcmp(type_name_from_stack_position_1, "number") == 0);
 		int decoded_integer_from_Stack_method = myLuaState.Stack(1).ToInteger();
 		cout << "... decoded integer from Stack(1): " << decoded_integer_from_Stack_method << endl;
-		assert(decoded_integer_from_Stack_method == random_number_2);
+		CHECK(decoded_integer_from_Stack_method == random_number_2);
 //		log_and_check_types_via_Is_methods<LuaObject>(myLuaState.Stack(1), LUA_TNUMBER);
 		myLuaState.Pop(1);
 	}
@@ -412,9 +424,9 @@ int main(int argc, const char * argv[])
 		cout << "Retrieving global table\n";
 		LuaObject allGlobals = myLuaState.GetGlobals();
 		cout << "... type: " << allGlobals.Type() << endl;
-		assert(allGlobals.Type() == LUA_TTABLE);
+		CHECK(allGlobals.Type() == LUA_TTABLE);
 		cout << "... type name: " << allGlobals.TypeName() << endl;
-		assert(strcmp(allGlobals.TypeName(), "table") == 0);
+		CHECK(strcmp(allGlobals.TypeName(), "table") == 0);
 		log_and_check_types_via_Is_methods(allGlobals, LUA_TTABLE);
 	}
 	
@@ -427,11 +439,11 @@ int main(int argc, const char * argv[])
 		myLuaState.GetGlobals().SetInteger(key.c_str(), value);
 		int decoded_value_1 = myLuaState.GetGlobals().GetByName(key.c_str()).ToInteger();
 		cout << "... decoded value 1 (single-line retrieval): " << decoded_value_1 << endl;
-		assert(decoded_value_1 == value);
+		CHECK(decoded_value_1 == value);
 		LuaObject encoded_value = myLuaState.GetGlobals().GetByName(key.c_str());
 		int decoded_value_2 = encoded_value.ToInteger();
 		cout << "... decoded value 2 (value from named LuaObject): " << decoded_value_2 << endl;
-		assert(decoded_value_2 == value);
+		CHECK(decoded_value_2 == value);
 	}
 	
 	{
@@ -447,10 +459,10 @@ int main(int argc, const char * argv[])
 		cout << "... new type: " << helloObj.Type() << endl;
 		cout << "... new type name: " << helloObj.TypeName() << endl;
 #if LuaPlusLite__ToXYZ_methods_convert_internal_value_types == 1
-		assert(helloObj.Type() == LUA_TSTRING);
+		CHECK(helloObj.Type() == LUA_TSTRING);
 		log_and_check_types_via_Is_methods(helloObj, LUA_TSTRING);
 #else
-		assert(helloObj.Type() == LUA_TNUMBER);
+		CHECK(helloObj.Type() == LUA_TNUMBER);
 		log_and_check_types_via_Is_methods(helloObj, LUA_TNUMBER);
 #endif
 	}
@@ -468,7 +480,7 @@ int main(int argc, const char * argv[])
 			exceptionMessage = e.what();
 		}
 		cout << "... was exception caught on SetInteger called on uninitialized LuaObject?: " << wasExceptionCaught << endl;
-		assert(wasExceptionCaught == true);
+		CHECK(wasExceptionCaught == true);
 		cout << "... exception message: \"" << exceptionMessage << "\"\n";
 
 		wasExceptionCaught = false;
@@ -481,9 +493,15 @@ int main(int argc, const char * argv[])
 			exceptionMessage = e.what();
 		}
 		cout << "... was exception caught on SetInteger called on integer-representing LuaObject?: " << wasExceptionCaught << endl;
-		assert(wasExceptionCaught == true);
+		CHECK(wasExceptionCaught == true);
 		cout << "... exception message: \"" << exceptionMessage << "\"\n";
 	}
+    
+    if (fail_count > 0) {
+        cout << "FAIL COUNT: " << fail_count << "\n";
+    } else {
+        cout << "ALL CHECKS PASSED!\n";
+    }
 	
     return 0;
 }
