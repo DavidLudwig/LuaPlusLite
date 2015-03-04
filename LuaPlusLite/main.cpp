@@ -361,7 +361,7 @@ int main(int argc, const char * argv[])
 		CHECK(myLuaState.GetTop() == 0);
 	} TEST_END;
 	
-	TEST("Assigning a full userdata value to a table:") {
+	TEST("Assigning a full userdata value to a table") {
 		string key = get_random_string();
 		int dummy = 0;
 		void * value = (void *)&dummy;
